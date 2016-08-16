@@ -1,7 +1,7 @@
 --- Default Tangler
 --- ===============
 
-#!/usr/bin/env runhaskell
+module Main where
 
 import System.Environment (getArgs)
 
@@ -23,7 +23,7 @@ import Text.Pandoc.Tangle
 --- ------------------
 
 main :: IO ()
-main = do [rArgs, tArgs, wArgs, (fName : [])] <- getArgs >>= return . splitArgInput
+main = do (rArgs : tArgs : wArgs : (fName : []) : _) <- getArgs >>= return . splitArgInput
           let processor = defaultWriters wArgs . defaultTanglers tArgs
           readFile fName >>= defaultReaders rArgs >>= putStrLn . dropWhile (== '\n') . processor
 

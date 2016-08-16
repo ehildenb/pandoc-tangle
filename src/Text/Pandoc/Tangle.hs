@@ -34,7 +34,9 @@ takeSectWith p (h@(Header n _ _) : bs)
                         (False, []) -> []
                         _           -> h : (sectText ++ subSects)
       in  sectFinal ++ takeRest
-takeSectWith p (b : bs) = takeSectWith p bs
+takeSectWith p bs = let beforeH = takeWhile (not . header) bs
+                        afterH  = takeSectWith p . dropWhile (not . header) $ bs
+                    in  if p beforeH then beforeH ++ afterH else afterH
 
 --- drop sections by name
 dropSects :: [[Inline]] -> Pandoc -> Pandoc

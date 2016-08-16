@@ -1,3 +1,8 @@
+``` {.haskell .main}
+#!/usr/bin/env haskell
+```
+
+
 Pandoc Tangle
 =============
 
@@ -13,7 +18,7 @@ The default tangler imports `Pandoc` and the library tangler to implement some
 simple defaults.
 
 ```{.haskell .main}
-#!/usr/bin/env runhaskell
+module Main where
 
 import System.Environment (getArgs)
 
@@ -45,7 +50,7 @@ The reader, tangler, and writer will be run and the output printed to stdout.
 
 ``` {.haskell .main}
 main :: IO ()
-main = do [rArgs, tArgs, wArgs, (fName : [])] <- getArgs >>= return . splitArgInput
+main = do (rArgs : tArgs : wArgs : (fName : []) : _) <- getArgs >>= return . splitArgInput
           let processor = defaultWriters wArgs . defaultTanglers tArgs
           readFile fName >>= defaultReaders rArgs >>= putStrLn . dropWhile (== '\n') . processor
 
