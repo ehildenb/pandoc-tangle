@@ -1,8 +1,3 @@
-``` {.haskell .main}
-#!/usr/bin/env haskell
-```
-
-
 Pandoc Tangle
 =============
 

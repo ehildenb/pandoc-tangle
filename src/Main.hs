@@ -1,6 +1,3 @@
-#!/usr/bin/env haskell
-
-
 --- Default Tangler
 --- ===============
 
