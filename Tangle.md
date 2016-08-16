@@ -12,6 +12,12 @@ Default Tangler
 The default tangler imports `Pandoc` and the library tangler to implement some
 simple defaults.
 
+Your input must be of the form:
+
+``` {.sh .example}
+$ pandoc-tangle reader_arguments -- tangler_arguments -- writer_arguments -- file_name
+```
+
 ```{.haskell .main}
 module Main where
 
@@ -34,12 +40,6 @@ import Text.Pandoc.Tangle
 
 Main Functionality
 ------------------
-
-Your input must be of the form:
-
-``` {.sh .example}
-$ pandoc-tangle reader_arguments -- tangler_arguments -- writer_arguments -- file_name
-```
 
 The reader, tangler, and writer will be run and the output printed to stdout.
 
@@ -65,7 +65,7 @@ Only the default `readers`
 are supported. The `[String]` fed to `defaultReaders` will be the
 `reader_arguments` supplied to `pandoc-tangle`.
 
-``` {.haskell .main}
+``` {.haskell .main .example}
 defaultReaders :: [String] -> String -> IO Pandoc
 defaultReaders [reader] = case lookup reader readers of
                             Just (StringReader r) -> fmap (fmap handleError) (r (def {readerApplyMacros = True}))
@@ -88,7 +88,7 @@ strings in `codes*`, then removes sections that don't have code.
 The `[String]` fed to the `defaultTanglers` function will be the
 `tangler_arguments` supplied to `pandoc-tangle`.
 
-``` {.haskell .main}
+``` {.haskell .main .example}
 defaultTanglers :: [String] -> Pandoc -> Pandoc
 defaultTanglers ["id"]           = id
 defaultTanglers ["code"]         = dropSectWithoutCode
@@ -111,20 +111,19 @@ attribute.
 The `[String]` fed into the `defaultWriters` function will be the
 `writer_arguments` supplied to `pandoc-tangle`.
 
-``` {.haskell .main}
+``` {.haskell .main .example}
 defaultWriters :: [String] -> Pandoc -> String
-defaultWriters ["pandoc", writer]
-    = case lookup writer writers of
-        Just (PureStringWriter w) -> w (def {writerColumns = 80})
-        _                         -> error $ "Pandoc writer '" ++ writer ++ "' not found."
-defaultWriters ["code", lang]
-    = let writeCodeString         = intercalate "\n" . concatMap (writeCodeBlock lang)
-          getBlocks (Pandoc m bs) = bs
-          getCode                 = dropSectWithoutCode . takeCode lang
-      in  writeCodeString . getBlocks . getCode
-defaultWriters w
-    = error $ "Writer '" ++ intercalate " " w ++ "' not found."
+defaultWriters ["pandoc", writer] = case lookup writer writers of
+                                        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+                                        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
+defaultWriters ["code", lang]     = let writeCodeString      = intercalate "\n" . concatMap (writeCodeBlock lang)
+                                        blocks (Pandoc m bs) = bs
+                                        getCode              = dropSectWithoutCode . takeCode lang
+                                    in  writeCodeString . blocks . getCode
+defaultWriters w                  = error $ "Writer '" ++ intercalate " " w ++ "' not found."
+```
 
+``` {.haskell .main}
 writeCodeBlock :: String -> Block -> [String]
 writeCodeBlock lang (CodeBlock (_,ls,_) code)
     | lang `elem` ls = "" : lines code

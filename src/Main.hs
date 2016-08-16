@@ -56,17 +56,14 @@ defaultTanglers tangler          = error $ "Tangler '" ++ intercalate " " tangle
 --- ---------------
 
 defaultWriters :: [String] -> Pandoc -> String
-defaultWriters ["pandoc", writer]
-    = case lookup writer writers of
-        Just (PureStringWriter w) -> w (def {writerColumns = 80})
-        _                         -> error $ "Pandoc writer '" ++ writer ++ "' not found."
-defaultWriters ["code", lang]
-    = let writeCodeString         = intercalate "\n" . concatMap (writeCodeBlock lang)
-          getBlocks (Pandoc m bs) = bs
-          getCode                 = dropSectWithoutCode . takeCode lang
-      in  writeCodeString . getBlocks . getCode
-defaultWriters w
-    = error $ "Writer '" ++ intercalate " " w ++ "' not found."
+defaultWriters ["pandoc", writer] = case lookup writer writers of
+                                        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+                                        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
+defaultWriters ["code", lang]     = let writeCodeString      = intercalate "\n" . concatMap (writeCodeBlock lang)
+                                        blocks (Pandoc m bs) = bs
+                                        getCode              = dropSectWithoutCode . takeCode lang
+                                    in  writeCodeString . blocks . getCode
+defaultWriters w                  = error $ "Writer '" ++ intercalate " " w ++ "' not found."
 
 writeCodeBlock :: String -> Block -> [String]
 writeCodeBlock lang (CodeBlock (_,ls,_) code)
