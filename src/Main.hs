@@ -1,3 +1,6 @@
+#!/usr/bin/env haskell
+
+
 --- Default Tangler
 --- ===============
 
@@ -61,7 +64,10 @@ defaultWriters ["pandoc", writer]
         Just (PureStringWriter w) -> w (def {writerColumns = 80})
         _                         -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 defaultWriters ["code", lang]
-    = intercalate "\n" . concatMap (writeCodeBlock lang) . getBlocks . dropSectWithoutCode . takeCode lang
+    = let writeCodeString         = intercalate "\n" . concatMap (writeCodeBlock lang)
+          getBlocks (Pandoc m bs) = bs
+          getCode                 = dropSectWithoutCode . takeCode lang
+      in  writeCodeString . getBlocks . getCode
 defaultWriters w
     = error $ "Writer '" ++ intercalate " " w ++ "' not found."
 

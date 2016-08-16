@@ -123,7 +123,10 @@ defaultWriters ["pandoc", writer]
         Just (PureStringWriter w) -> w (def {writerColumns = 80})
         _                         -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 defaultWriters ["code", lang]
-    = intercalate "\n" . concatMap (writeCodeBlock lang) . getBlocks . dropSectWithoutCode . takeCode lang
+    = let writeCodeString         = intercalate "\n" . concatMap (writeCodeBlock lang)
+          getBlocks (Pandoc m bs) = bs
+          getCode                 = dropSectWithoutCode . takeCode lang
+      in  writeCodeString . getBlocks . getCode
 defaultWriters w
     = error $ "Writer '" ++ intercalate " " w ++ "' not found."
 
@@ -161,7 +164,7 @@ module Text.Pandoc.Tangle where
 import Data.List ((\\))
 import qualified Data.Map as M (Map, lookup, toList)
 
-import Text.Pandoc ( Pandoc(Pandoc), Block(CodeBlock, Header, Null), Inline(Str, Space, Code, Math)
+import Text.Pandoc ( Pandoc(Pandoc), Block(CodeBlock, Header, Para, Null), Inline(Str, Space, Code, Math)
                    , Attr, nullAttr
                    , Meta(Meta), MetaValue(MetaMap, MetaInlines, MetaList, MetaString)
                    )
@@ -186,7 +189,7 @@ section that is kept.
 
 ``` {.haskell .lib}
 takeSects :: [[Inline]] -> Pandoc -> Pandoc
-takeSects names = takeSectWith (sectNames names)
+takeSects names (Pandoc m bs) = Pandoc m $ takeSectWith (sectNames names) bs
 ```
 
 `takeSectWithCode` will only take sections which have codeblocks in them. This
@@ -194,16 +197,7 @@ is useful for creating a minimal "skeleton" document to write a code-file from.
 
 ``` {.haskell .lib}
 takeSectWithCode :: Pandoc -> Pandoc
-takeSectWithCode = takeSectWith (any codeBlock)
-```
-
-`takeCode` will only keep code marked with the specified class.
-
-``` {.haskell .lib}
-takeCode :: String -> Pandoc -> Pandoc
-takeCode code
-    = let onlyCodeClass code b = if codeBlock `implies` isClass code $ b then b else Null
-      in  walk (onlyCodeClass code)
+takeSectWithCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
 ```
 
 `takeSectWith` accepts a predicate over a section (so a predicate over the list
@@ -213,9 +207,9 @@ section-text, *not* including the sub-section headers or text of that section.
 If any of the sub-sections of a section are kept, the section is kept as well.
 
 ``` {.haskell .lib}
-takeSectWith :: ([Block] -> Bool) -> Pandoc -> Pandoc
-takeSectWith _ (Pandoc m []) = Pandoc m []
-takeSectWith p (Pandoc m (h@(Header n _ _) : bs))
+takeSectWith :: ([Block] -> Bool) -> [Block] -> [Block]
+takeSectWith _ [] = []
+takeSectWith p (h@(Header n _ _) : bs)
     = let sect      = takeWhile (not . headerN (<= n)) bs
           sectText  = takeWhile (not . header) sect
           takeRest  = takeSectWith p $ dropWhile (not . headerN (<= n)) bs
@@ -224,8 +218,27 @@ takeSectWith p (Pandoc m (h@(Header n _ _) : bs))
                         (True, _)   -> h : sect
                         (False, []) -> []
                         _           -> h : (sectText ++ subSects)
-      in  Pandoc m $ sectFinal ++ takeRest
-takeSectWith p (Pandoc m (b : bs)) = Pandoc m $ takeSectWith p bs
+      in  sectFinal ++ takeRest
+takeSectWith p bs = let beforeH = takeWhile (not . header) bs
+                        afterH  = takeSectWith p . dropWhile (not . header) $ bs
+                    in  if p beforeH then beforeH ++ afterH else afterH
+```
+
+`takeCode` will only keep code marked with the specified class. `takeCode` takes
+code marked with any in the list of classes
+
+``` {.haskell .lib}
+takeCode :: String -> Pandoc -> Pandoc
+takeCode code = walk (onlyCodeClass code)
+
+takeCodes :: [String] -> Pandoc -> Pandoc
+takeCodes codes = walk (onlyCodeClasses codes)
+
+onlyCodeClass :: String -> Block -> Block
+onlyCodeClass code b = if codeBlock `implies` isClass code $ b then b else Null
+
+onlyCodeClasses :: [String] -> Block -> Block
+onlyCodeClasses codes b = if codeBlock `implies` hasClass codes $ b then b else Null
 ```
 
 ### Drop Functions
@@ -254,10 +267,17 @@ dropSect name (Pandoc m bs)
 headers to avoid clutter in the final document.
 
 ``` {.haskell .lib}
-dropClasses :: [String] -> Pandoc -> Pandoc
+dropClasses :: [String] -> Block -> Block
 dropClasses classes (CodeBlock (_, cs, _) code) = CodeBlock ("", cs \\ classes, []) code
 dropClasses classes (Header n  (_, cs, _) h)    = Header n  ("", cs \\ classes, []) h
 dropClasses classes b                           = b
+```
+
+`dropSectWithoutCode` will remove any section that contains no code.
+
+``` {.haskell .lib}
+dropSectWithoutCode :: Pandoc -> Pandoc
+dropSectWithoutCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
 ```
 
 `dropMath` will remove all math from a document. It's useful if you have some
@@ -266,8 +286,8 @@ target which doesn't handle math very well.
 ``` {.haskell .lib}
 dropMath :: Pandoc -> Pandoc
 dropMath
-    = let nullMath Para [(Math _ _)] = Null
-          nullMath b                 = b
+    = let nullMath (Para [(Math _ _)]) = Null
+          nullMath b                   = b
       in  walk nullMath
 ```
 
