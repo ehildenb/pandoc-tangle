@@ -14,7 +14,7 @@ import Text.Pandoc.Options ( def
                            , writerColumns
                            )
 import Text.Pandoc.Error (handleError)
-import Tangle
+import Text.Pandoc.Tangle
 
 --- Main Functionality
 --- ------------------

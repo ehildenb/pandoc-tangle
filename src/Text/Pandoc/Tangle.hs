@@ -1,4 +1,4 @@
-module Tangle where
+module Text.Pandoc.Tangle where
 
 import Data.List ((\\))
 import qualified Data.Map as M (Map, lookup, toList)
