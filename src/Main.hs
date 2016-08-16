@@ -1,3 +1,6 @@
+--- Default Tangler
+--- ===============
+
 #!/usr/bin/env runhaskell
 
 import System.Environment (getArgs)
@@ -6,8 +9,8 @@ import Data.List (intercalate)
 
 import Text.Pandoc ( Pandoc(Pandoc), Block(CodeBlock, Header)
                    , nullMeta
-                   , readMarkdown
-                   , writeMarkdown
+                   , readers, Reader(StringReader)
+                   , writers, Writer(PureStringWriter)
                    )
 import Text.Pandoc.Options ( def
                            , readerApplyMacros
@@ -20,62 +23,63 @@ import Text.Pandoc.Tangle
 --- ------------------
 
 main :: IO ()
-main = do (tangleArgs, writeArgs, fileNames) <- getArgs >>= return . splitArgInput
-          case (defaultTanglers tangleArgs, defaultWriters writeArgs, fileNames) of
-            (Nothing, _, _)      -> error $    "Tangler '"
-                                            ++ intercalate " " tangleArgs
-                                            ++ "' not found in 'defaultTanglers'."
-            (Just _, Nothing, _) -> error $    "Writer '"
-                                            ++ intercalate " " writeArgs
-                                            ++ "' not found in 'defaultWriters'."
-            (Just tangler, Just writer, [fileName])
-                                 ->     readFile fileName
-                                    >>= return . tangler . pandocReader
-                                    >>= putStrLn . dropWhile (== '\n') . writer
-            (Just _, Just _, _)  -> error $ "Supply exacly one filename."
+main = do [rArgs, tArgs, wArgs, (fName : [])] <- getArgs >>= return . splitArgInput
+          let processor = defaultWriters wArgs . defaultTanglers tArgs
+          readFile fName >>= defaultReaders rArgs >>= putStrLn . dropWhile (== '\n') . processor
 
-splitArgInput :: [String] -> ([String], [String], [String])
-splitArgInput input = let initArgs  = takeWhile (/= "--")
-                          otherArgs = dropWhile (== "--") . dropWhile (/= "--")
-                      in  ( initArgs input
-                          , initArgs . otherArgs $ input
-                          , initArgs . otherArgs . otherArgs $ input
-                          )
-
---- Default Tanglers
---- ----------------
-
-defaultTanglers :: [String] -> Maybe (Pandoc -> Pandoc)
-defaultTanglers ["id"]           = Just $ id
-defaultTanglers ["code"]         = Just $ dropSectWithoutCode
-defaultTanglers ("code" : codes) = Just $ dropSectWithoutCode . takeCodes codes
-defaultTanglers _                = Nothing
+splitArgInput :: [String] -> [[String]]
+splitArgInput = let initArgs       = takeWhile (/= "--")
+                    otherArgs args = case dropWhile (/= "--") args of
+                                        ("--" : rest) -> rest
+                                        _             -> []
+                in  map initArgs . iterate otherArgs
 
 --- Default Readers
 --- ---------------
 
-pandocReader :: String -> Pandoc
-pandocReader = handleError . readMarkdown (def {readerApplyMacros = True})
+defaultReaders :: [String] -> String -> IO Pandoc
+defaultReaders [reader] = case lookup reader readers of
+                            Just (StringReader r) -> fmap (fmap handleError) (r (def {readerApplyMacros = True}))
+                            _                     -> error $ "Pandoc reader '" ++ reader ++ "' not found."
+defaultReaders _        = error $ "Only default Pandoc readers supported."
+
+--- Default Tanglers
+--- ----------------
+
+defaultTanglers :: [String] -> Pandoc -> Pandoc
+defaultTanglers ["id"]           = id
+defaultTanglers ["code"]         = dropSectWithoutCode
+defaultTanglers ("code" : codes) = dropSectWithoutCode . takeCodes codes
+defaultTanglers tangler          = error $ "Tangler '" ++ intercalate " " tangler ++ "' not found."
 
 --- Default Writers
--------------------
+--- ---------------
 
-defaultWriters :: [String] -> Maybe (Pandoc -> String)
-defaultWriters ["text"] = Just $ textWriter
-defaultWriters ["code"] = Just $ codeWriter
-defaultWriters _        = Nothing
+defaultWriters :: [String] -> Pandoc -> String
+defaultWriters ["pandoc", writer]
+    = case lookup writer writers of
+        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+        _                         -> error $ "Pandoc writer '" ++ writer ++ "' not found."
+defaultWriters ["code", lang]
+    = intercalate "\n" . concatMap (writeCodeBlock lang) . getBlocks . dropSectWithoutCode . takeCode lang
+defaultWriters w
+    = error $ "Writer '" ++ intercalate " " w ++ "' not found."
 
-textWriter :: Pandoc -> String
-textWriter = writeMarkdown (def {writerColumns = 80})
-
-codeWriter :: Pandoc -> String
-codeWriter = intercalate "\n" . concatMap writeCodeBlock . getBlocks . dropSectWithoutCode
-
-writeCodeBlock :: Block -> [String]
-writeCodeBlock (CodeBlock _ code) = "" : lines code
-writeCodeBlock h@(Header n _ _)   = let comment = map ("--- " ++) . lines . textWriter
-                                        docStrs = comment (Pandoc nullMeta [h])
-                                    in  if n == 1
-                                            then "" : "" : docStrs
-                                            else "" : docStrs
-writeCodeBlock _                  = []
+writeCodeBlock :: String -> Block -> [String]
+writeCodeBlock lang (CodeBlock (_,ls,_) code)
+    | lang `elem` ls = "" : lines code
+writeCodeBlock lang h@(Header n _ _)
+    = let writeMD = defaultWriters ["pandoc", "markdown"]
+          comment = map (commentL lang ++) . lines . writeMD . Pandoc nullMeta $ [h]
+        in  if n == 1
+                then "" : "" : comment
+                else "" : comment
+    where
+        commentL "haskell" = "--- "
+        commentL "maude"   = "--- "
+        commentL "c"       = "// "
+        commentL "c++"     = "// "
+        commentL "bash"    = "# "
+        commentL "python"  = "# "
+        commentL l         = error $ "Commenting for language '" ++ l ++ "' not supported."
+writeCodeBlock _ _         = []
