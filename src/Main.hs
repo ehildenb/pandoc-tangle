@@ -1,6 +1,9 @@
 --- Pandoc Tangle
 --- =============
 
+--- Main Functionality
+--- ------------------
+
 module Main where
 
 import Data.List ( intercalate )
@@ -28,9 +31,6 @@ import Text.Pandoc.Error   ( handleError )
 import qualified Text.Pandoc.Builder as B ( toList , text )
 import Text.Pandoc.Tangle
 
---- Main Functionality
---- ------------------
-
 main :: IO ()
 main = let opts = info (helper <*> tanglerOpts)
                        (  fullDesc
@@ -38,7 +38,7 @@ main = let opts = info (helper <*> tanglerOpts)
                        <> OPT.header "pandoc-tangle - a tangler for Pandoc."
                        )
        in  do Tangler reader writer sect code files <- execParser opts
-              let codeStrip = maybe id takeCode' code
+              let codeStrip = maybe id takeCode code
               let sectStrip = maybe id takeSect sect
               input <- case files of
                         [] -> getContents
@@ -95,8 +95,8 @@ takeSect = takeSects . map (B.toList . B.text) . splitOn "|"
 
 --- ### Code
 
-takeCode' :: String -> Pandoc -> Pandoc
-takeCode' = takeCodes . splitOn "|"
+takeCode :: String -> Pandoc -> Pandoc
+takeCode = takeCodes . splitOn "|"
 
 --- Default Writers
 --- ---------------

@@ -41,9 +41,6 @@ takeSectWith p bs = let beforeH = takeWhile (not . header) bs
                         afterH  = takeSectWith p . dropWhile (not . header) $ bs
                     in  if p beforeH then beforeH ++ afterH else afterH
 
-takeCode :: String -> Pandoc -> Pandoc
-takeCode code = walk (onlyCodeClass code)
-
 takeCodes :: [String] -> Pandoc -> Pandoc
 takeCodes codes = walk (onlyCodeClasses codes)
 
