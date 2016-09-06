@@ -1,3 +1,10 @@
+Pandoc Tangle
+=============
+
+This library allows for tangling/weaving documents in Pandoc's internal
+representation. A set of default tanglers can be accessed with the command
+`pandoc-tangle`.
+
 Default Tangler
 ===============
 
@@ -58,10 +65,70 @@ supplied to `pandoc-tangle`.
 
 ``` {.haskell .main .example}
 defaultWriters :: String -> Pandoc -> String
-defaultWriters "code" = let writeCodeString      = intercalate "\n" . concatMap writeCodeBlock
-                            blocks (Pandoc m bs) = bs
-                        in  dropWhile (== '\n') . writeCodeString . blocks
-defaultWriters writer = case lookup writer writers of
-                            Just (PureStringWriter w) -> w (def {writerColumns = 80})
-                            _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
+defaultWriters ('c' : 'o' : 'd' : 'e' : '-' : lang)
+    = let writeCodeString = intercalate "\n" . concatMap (writeCodeBlock lang)
+          blocks (Pandoc m bs) = bs
+      in  dropWhile (== '\n') . writeCodeString . blocks . dropSectWithoutCode
+defaultWriters writer
+    = case lookup writer writers of
+        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 ```
+
+Tangle
+======
+
+This module can be used to aid tangling documents in Pandoc's internal
+representation. Metadata can be used to inform the derivation process, and
+various small document manipulators are supplied.
+
+Document Manipulation
+---------------------
+
+These functions are of type `Pandoc -> Pandoc`, so they can be used to build up
+document manipulations using function composition.
+
+### Take Functions
+
+In general, the `take*` functions will look for sections that have certain
+properties and keep those sections along with all super-sections. Super-sections
+text which is not part of one of it's sub-sections will be kept as well.
+
+The `takeSects` function will only keep sections of the document which are in
+the supplied list of section names. It will also take super-sections of any
+section that is kept.
+
+`takeSectWithCode` will only take sections which have codeblocks in them. This
+is useful for creating a minimal "skeleton" document to write a code-file from.
+
+`takeSectWith` accepts a predicate over a section (so a predicate over the list
+of blocks that make up a section) and keeps sections which match that predicate.
+Note that the predicate is run *only* over the section header and the
+section-text, *not* including the sub-section headers or text of that section.
+If any of the sub-sections of a section are kept, the section is kept as well.
+
+`takeCode` will only keep code marked with the specified class. `takeCode` takes
+code marked with any in the list of classes
+
+### Drop Functions
+
+The `drop*` functions will look for sections with certain properties and drop
+those sections and all sub-sections.
+
+`dropSects` will remove all sections which have names in the supplied list of
+section names. It uses `dropSect`, which removes only one section name from a
+document.
+
+`dropClasses` will remove the listed class attributes from the code-blocks and
+headers to avoid clutter in the final document.
+
+`dropSectWithoutCode` will remove any section that contains no code.
+
+`dropMath` will remove all math from a document. It's useful if you have some
+target which doesn't handle math very well.
+
+Predicates over Documents
+-------------------------
+
+Metadata Extraction
+-------------------

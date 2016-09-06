@@ -39,7 +39,7 @@ main = let opts = info (helper <*> tanglerOpts)
               input <- case files of
                         [] -> getContents
                         _  -> mapM readFile files >>= return . intercalate "\n"
-              defaultReaders reader input >>= putStrLn . defaultWriters writer . keepCode code
+              defaultReaders reader input >>= putStrLn . defaultWriters writer . maybe id takeCode code
 
 data Tangler = Tangler { reader  :: String
                        , code    :: Maybe String
@@ -85,19 +85,21 @@ keepCode (Just code) = dropSectWithoutCode . takeCodes [code]
 --- ---------------
 
 defaultWriters :: String -> Pandoc -> String
-defaultWriters "code" = let writeCodeString      = intercalate "\n" . concatMap writeCodeBlock
-                            blocks (Pandoc m bs) = bs
-                        in  dropWhile (== '\n') . writeCodeString . blocks
-defaultWriters writer = case lookup writer writers of
-                            Just (PureStringWriter w) -> w (def {writerColumns = 80})
-                            _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
+defaultWriters ('c' : 'o' : 'd' : 'e' : '-' : lang)
+    = let writeCodeString = intercalate "\n" . concatMap (writeCodeBlock lang)
+          blocks (Pandoc m bs) = bs
+      in  dropWhile (== '\n') . writeCodeString . blocks . dropSectWithoutCode
+defaultWriters writer
+    = case lookup writer writers of
+        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 
-writeCodeBlock :: Block -> [String]
-writeCodeBlock (CodeBlock (_,ls,_) code)
-    = "" : lines code
-writeCodeBlock h@(Header n _ _)
+writeCodeBlock :: String -> Block -> [String]
+writeCodeBlock lang (CodeBlock (_,ls,_) code)
+    | lang `elem` ls = "" : lines code
+writeCodeBlock lang h@(Header n _ _)
     = let writeMD = defaultWriters "markdown"
-          comment = map (commentL "haskell" ++) . lines . writeMD . Pandoc nullMeta $ [h]
+          comment = map (commentL lang ++) . lines . writeMD . Pandoc nullMeta $ [h]
         in  if n == 1
                 then "" : "" : comment
                 else "" : comment
@@ -109,4 +111,4 @@ writeCodeBlock h@(Header n _ _)
         commentL "bash"    = "# "
         commentL "python"  = "# "
         commentL l         = error $ "Commenting for language '" ++ l ++ "' not supported."
-writeCodeBlock _ = []
+writeCodeBlock _ _ = []
