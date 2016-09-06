@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
-stack exec -- pandoc-tangle markdown -- code example -- pandoc markdown -- Tangle.md > README.md
-stack exec -- pandoc-tangle markdown -- code main    -- code haskell    -- Tangle.md > src/Main.hs
-stack exec -- pandoc-tangle markdown -- code lib     -- code haskell    -- Tangle.md > src/Text/Pandoc/Tangle.hs
+md2 --from=markdown --code=example --to=markdown Tangle.md > README.md
+md2 --from=markdown --code=main    --to=code     Tangle.md > src/Main.hs
+md2 --from=markdown --code=lib     --to=code     Tangle.md > src/Text/Pandoc/Tangle.hs
+stack build

@@ -15,26 +15,33 @@ simple defaults.
 Your input must be of the form:
 
 ``` {.sh .example}
-$ pandoc-tangle reader_arguments -- tangler_arguments -- writer_arguments -- file_name
+$ pandoc-tangle reader tangler writer file_name
 ```
 
 ```{.haskell .main}
 module Main where
 
-import System.Environment (getArgs)
+import Data.List ( intercalate )
 
-import Data.List (intercalate)
+import System.IO ( getContents )
 
-import Text.Pandoc ( Pandoc(Pandoc), Block(CodeBlock, Header)
-                   , nullMeta
-                   , readers, Reader(StringReader)
-                   , writers, Writer(PureStringWriter)
-                   )
+import Options.Applicative as OPT ( execParser , Parser , ParserInfo
+                                  , strOption , subparser , command , argument
+                                  , long , short , metavar , help
+                                  , helper , info , fullDesc , progDesc , header
+                                  , many , some , (<>) , str , optional
+                                  )
+
+import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header)
+                           , nullMeta
+                           , readers, Reader(StringReader)
+                           , writers, Writer(PureStringWriter)
+                           )
 import Text.Pandoc.Options ( def
                            , readerApplyMacros
                            , writerColumns
                            )
-import Text.Pandoc.Error (handleError)
+import Text.Pandoc.Error   ( handleError )
 import Text.Pandoc.Tangle
 ```
 
@@ -45,16 +52,41 @@ The reader, tangler, and writer will be run and the output printed to stdout.
 
 ``` {.haskell .main}
 main :: IO ()
-main = do (rArgs : tArgs : wArgs : (fName : []) : _) <- getArgs >>= return . splitArgInput
-          let processor = defaultWriters wArgs . defaultTanglers tArgs
-          readFile fName >>= defaultReaders rArgs >>= putStrLn . dropWhile (== '\n') . processor
+main = let opts = info (helper <*> tanglerOpts)
+                       (  fullDesc
+                       <> progDesc "Use Pandoc, as a Tangler."
+                       <> OPT.header "pandoc-tangle - a tangler for Pandoc."
+                       )
+       in  do Tangler reader code writer files <- execParser opts
+              input <- case files of
+                        [] -> getContents
+                        _  -> mapM readFile files >>= return . intercalate "\n"
+              defaultReaders reader input >>= putStrLn . defaultWriters writer . keepCode code
 
-splitArgInput :: [String] -> [[String]]
-splitArgInput = let initArgs       = takeWhile (/= "--")
-                    otherArgs args = case dropWhile (/= "--") args of
-                                        ("--" : rest) -> rest
-                                        _             -> []
-                in  map initArgs . iterate otherArgs
+data Tangler = Tangler { reader  :: String
+                       , code    :: Maybe String
+                       , writer  :: String
+                       , files   :: [String]
+                       }
+
+tanglerOpts :: Parser Tangler
+tanglerOpts = Tangler <$> strOption (  long "from"
+                                    <> short 'f'
+                                    <> metavar "READER"
+                                    <> help "Pandoc READER to use."
+                                    )
+                      <*> ( optional $ strOption (  long "code"
+                                                 <> short 'c'
+                                                 <> metavar "CODEBLOCKS"
+                                                 <> help "CODEBLOCKS to keep."
+                                                 )
+                          )
+                      <*> strOption (  long "to"
+                                    <> short 't'
+                                    <> metavar "WRITER"
+                                    <> help "Pandoc WRITER to use."
+                                    )
+                      <*> many (argument OPT.str (metavar "FILES..."))
 ```
 
 Default Readers
@@ -62,38 +94,26 @@ Default Readers
 
 Only the default `readers`
 [from Pandoc](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
-are supported. The `[String]` fed to `defaultReaders` will be the
-`reader_arguments` supplied to `pandoc-tangle`.
+are supported. The `String` fed to `defaultReaders` will be the
+`READER` supplied to `pandoc-tangle`.
 
 ``` {.haskell .main .example}
-defaultReaders :: [String] -> String -> IO Pandoc
-defaultReaders [reader] = case lookup reader readers of
+defaultReaders :: String -> String -> IO Pandoc
+defaultReaders reader = case lookup reader readers of
                             Just (StringReader r) -> fmap (fmap handleError) (r (def {readerApplyMacros = True}))
                             _                     -> error $ "Pandoc reader '" ++ reader ++ "' not found."
-defaultReaders _        = error $ "Only default Pandoc readers supported."
 ```
 
-Default Tanglers
-----------------
+Code Stripper
+-------------
 
-The default tanglers are listed here.
-
-The simplest of them is the `id` tangler which leaves the document alone.
-
-The `code` tangler removes sections that don't have code in them.
-
-The `code codes*` tangler removes all code blocks not marked with one of the
-strings in `codes*`, then removes sections that don't have code.
-
-The `[String]` fed to the `defaultTanglers` function will be the
-`tangler_arguments` supplied to `pandoc-tangle`.
+The `Maybe String` fed into this is the `CODEBLOCKS` option. If there is no
+supplied `CODEBLOCKS` option, all of the code is kept.
 
 ``` {.haskell .main .example}
-defaultTanglers :: [String] -> Pandoc -> Pandoc
-defaultTanglers ["id"]           = id
-defaultTanglers ["code"]         = dropSectWithoutCode
-defaultTanglers ("code" : codes) = dropSectWithoutCode . takeCodes codes
-defaultTanglers tangler          = error $ "Tangler '" ++ intercalate " " tangler ++ "' not found."
+keepCode :: Maybe String -> Pandoc -> Pandoc
+keepCode Nothing     = id
+keepCode (Just code) = dropSectWithoutCode . takeCodes [code]
 ```
 
 Default Writers
@@ -105,31 +125,28 @@ The `pandoc writer` writer will lookup the supplied `writer` in
 [Pandoc's writers](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
 and use that.
 
-The `code` writer will produce just the code marked with the supplide `lang`
-attribute.
+The `code` writer will produce just the code.
 
-The `[String]` fed into the `defaultWriters` function will be the
-`writer_arguments` supplied to `pandoc-tangle`.
+The `String` fed into the `defaultWriters` function will be the `WRITER`
+supplied to `pandoc-tangle`.
 
 ``` {.haskell .main .example}
-defaultWriters :: [String] -> Pandoc -> String
-defaultWriters ["pandoc", writer] = case lookup writer writers of
-                                        Just (PureStringWriter w) -> w (def {writerColumns = 80})
-                                        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
-defaultWriters ["code", lang]     = let writeCodeString      = intercalate "\n" . concatMap (writeCodeBlock lang)
-                                        blocks (Pandoc m bs) = bs
-                                        getCode              = dropSectWithoutCode . takeCode lang
-                                    in  writeCodeString . blocks . getCode
-defaultWriters w                  = error $ "Writer '" ++ intercalate " " w ++ "' not found."
+defaultWriters :: String -> Pandoc -> String
+defaultWriters "code" = let writeCodeString      = intercalate "\n" . concatMap writeCodeBlock
+                            blocks (Pandoc m bs) = bs
+                        in  dropWhile (== '\n') . writeCodeString . blocks
+defaultWriters writer = case lookup writer writers of
+                            Just (PureStringWriter w) -> w (def {writerColumns = 80})
+                            _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 ```
 
 ``` {.haskell .main}
-writeCodeBlock :: String -> Block -> [String]
-writeCodeBlock lang (CodeBlock (_,ls,_) code)
-    | lang `elem` ls = "" : lines code
-writeCodeBlock lang h@(Header n _ _)
-    = let writeMD = defaultWriters ["pandoc", "markdown"]
-          comment = map (commentL lang ++) . lines . writeMD . Pandoc nullMeta $ [h]
+writeCodeBlock :: Block -> [String]
+writeCodeBlock (CodeBlock (_,ls,_) code)
+    = "" : lines code
+writeCodeBlock h@(Header n _ _)
+    = let writeMD = defaultWriters "markdown"
+          comment = map (commentL "haskell" ++) . lines . writeMD . Pandoc nullMeta $ [h]
         in  if n == 1
                 then "" : "" : comment
                 else "" : comment
@@ -141,7 +158,7 @@ writeCodeBlock lang h@(Header n _ _)
         commentL "bash"    = "# "
         commentL "python"  = "# "
         commentL l         = error $ "Commenting for language '" ++ l ++ "' not supported."
-writeCodeBlock _ _         = []
+writeCodeBlock _ = []
 ```
 
 
