@@ -6,11 +6,13 @@ module Text.Pandoc.Tangle where
 import Data.List ((\\))
 import qualified Data.Map as M (Map, lookup, toList)
 
-import Text.Pandoc ( Pandoc(Pandoc), Block(CodeBlock, Header, Para, Null), Inline(Str, Space, Code, Math)
-                   , Attr, nullAttr
-                   , Meta(Meta), MetaValue(MetaMap, MetaInlines, MetaList, MetaString)
-                   )
-import Text.Pandoc.Walk (walk)
+import Text.Pandoc      ( Pandoc(Pandoc)
+                        , Block(CodeBlock, Header, Para, Null)
+                        , Inline(Str, Space, Code, Math)
+                        , Attr , nullAttr
+                        , Meta(Meta) , MetaValue(MetaMap, MetaInlines, MetaList, MetaString)
+                        )
+import Text.Pandoc.Walk ( walk )
 
 --- Document Manipulation
 --- ---------------------

@@ -1,34 +1,27 @@
 Pandoc Tangle
 =============
 
-This library allows for tangling/weaving documents in Pandoc's internal
-representation. A set of default tanglers can be accessed with the command
-`pandoc-tangle`.
-
-Default Tangler
-===============
-
-The default tangler imports `Pandoc` and the library tangler to implement some
-simple defaults.
-
-Your input must be of the form:
-
-``` {.sh .example}
-$ pandoc-tangle reader tangler writer file_name
-```
+This library allows for tangling documents in Pandoc's internal representation.
+A set of default tanglers can be accessed with the command `pandoc-tangle`.
 
 Main Functionality
 ------------------
 
-The reader, tangler, and writer will be run and the output printed to stdout.
+The default tangler imports `Pandoc` and the library tangler to implement some
+simple defaults.
+
+Run `stack init`, followed by `stack build` to build the executable. You can run
+`stack install` to place it at `~/.local/bin`.
+
+See `pandoc-tangle --help` for usage.
 
 Default Readers
 ---------------
 
 Only the default `readers` [from
 Pandoc](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
-are supported. The `String` fed to `defaultReaders` will be the `READER`
-supplied to `pandoc-tangle`.
+are supported. The `READER` specified on the command-line will be looked up in
+the list of Pandoc readers.
 
 ``` {.haskell .main .example}
 defaultReaders :: String -> String -> IO Pandoc
@@ -37,43 +30,29 @@ defaultReaders reader = case lookup reader readers of
                             _                     -> error $ "Pandoc reader '" ++ reader ++ "' not found."
 ```
 
-Code Stripper
--------------
+Tanglers
+--------
 
-The `Maybe String` fed into this is the `CODEBLOCKS` option. If there is no
-supplied `CODEBLOCKS` option, all of the code is kept.
+### Sections
 
-``` {.haskell .main .example}
-keepCode :: Maybe String -> Pandoc -> Pandoc
-keepCode Nothing     = id
-keepCode (Just code) = dropSectWithoutCode . takeCodes [code]
-```
+The `SECTIONS` input is the name of a section to keep in the document.
+Super-sections will be preserved as well.
+
+### Code
+
+The `CODEBLOCKS` input is the class of code-blocks to keep in the document. Any
+code-blocks not labelled with `CODEBLOCKS` will not be kept.
 
 Default Writers
 ---------------
 
-The default writers are listed here.
+The default `writers` [from
+Pandoc](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
+are supported. The `WRITER` specified on the command-line will be looked up in
+the list of Pandoc writers.
 
-The `pandoc writer` writer will lookup the supplied `writer` in [Pandoc's
-writers](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
-and use that.
-
-The `code` writer will produce just the code.
-
-The `String` fed into the `defaultWriters` function will be the `WRITER`
-supplied to `pandoc-tangle`.
-
-``` {.haskell .main .example}
-defaultWriters :: String -> Pandoc -> String
-defaultWriters ('c' : 'o' : 'd' : 'e' : '-' : lang)
-    = let writeCodeString = intercalate "\n" . concatMap (writeCodeBlock lang)
-          blocks (Pandoc m bs) = bs
-      in  dropWhile (== '\n') . writeCodeString . blocks . dropSectWithoutCode
-defaultWriters writer
-    = case lookup writer writers of
-        Just (PureStringWriter w) -> w (def {writerColumns = 80})
-        _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
-```
+In addition, the `code-LANG` writer will produce just the code, where `LANG` is
+the programming language comment-style to use for headers.
 
 Tangle
 ======

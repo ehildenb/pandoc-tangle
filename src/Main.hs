@@ -1,9 +1,10 @@
---- Default Tangler
---- ===============
+--- Pandoc Tangle
+--- =============
 
 module Main where
 
 import Data.List ( intercalate )
+import Data.List.Split ( splitOn )
 
 import System.IO ( getContents )
 
@@ -24,6 +25,7 @@ import Text.Pandoc.Options ( def
                            , writerColumns
                            )
 import Text.Pandoc.Error   ( handleError )
+import qualified Text.Pandoc.Builder as B ( toList , text )
 import Text.Pandoc.Tangle
 
 --- Main Functionality
@@ -35,16 +37,19 @@ main = let opts = info (helper <*> tanglerOpts)
                        <> progDesc "Use Pandoc, as a Tangler."
                        <> OPT.header "pandoc-tangle - a tangler for Pandoc."
                        )
-       in  do Tangler reader code writer files <- execParser opts
+       in  do Tangler reader writer sect code files <- execParser opts
+              let codeStrip = maybe id takeCode' code
+              let sectStrip = maybe id takeSect sect
               input <- case files of
                         [] -> getContents
                         _  -> mapM readFile files >>= return . intercalate "\n"
-              defaultReaders reader input >>= putStrLn . defaultWriters writer . maybe id takeCode code
+              defaultReaders reader input >>= putStrLn . defaultWriters writer . codeStrip . sectStrip
 
-data Tangler = Tangler { reader  :: String
-                       , code    :: Maybe String
-                       , writer  :: String
-                       , files   :: [String]
+data Tangler = Tangler { reader :: String
+                       , writer :: String
+                       , sect   :: Maybe String
+                       , code   :: Maybe String
+                       , files  :: [String]
                        }
 
 tanglerOpts :: Parser Tangler
@@ -53,17 +58,23 @@ tanglerOpts = Tangler <$> strOption (  long "from"
                                     <> metavar "READER"
                                     <> help "Pandoc READER to use."
                                     )
+                      <*> strOption (  long "to"
+                                    <> short 't'
+                                    <> metavar "WRITER"
+                                    <> help "Pandoc WRITER to use."
+                                    )
+                      <*> ( optional $ strOption (  long "section"
+                                                 <> short 's'
+                                                 <> metavar "SECTIONS"
+                                                 <> help "SECTIONS to keep."
+                                                 )
+                          )
                       <*> ( optional $ strOption (  long "code"
                                                  <> short 'c'
                                                  <> metavar "CODEBLOCKS"
                                                  <> help "CODEBLOCKS to keep."
                                                  )
                           )
-                      <*> strOption (  long "to"
-                                    <> short 't'
-                                    <> metavar "WRITER"
-                                    <> help "Pandoc WRITER to use."
-                                    )
                       <*> many (argument OPT.str (metavar "FILES..."))
 
 --- Default Readers
@@ -74,12 +85,18 @@ defaultReaders reader = case lookup reader readers of
                             Just (StringReader r) -> fmap (fmap handleError) (r (def {readerApplyMacros = True}))
                             _                     -> error $ "Pandoc reader '" ++ reader ++ "' not found."
 
---- Code Stripper
---- -------------
+--- Tanglers
+--- --------
 
-keepCode :: Maybe String -> Pandoc -> Pandoc
-keepCode Nothing     = id
-keepCode (Just code) = dropSectWithoutCode . takeCodes [code]
+--- ### Sections
+
+takeSect :: String -> Pandoc -> Pandoc
+takeSect = takeSects . map (B.toList . B.text) . splitOn "|"
+
+--- ### Code
+
+takeCode' :: String -> Pandoc -> Pandoc
+takeCode' = takeCodes . splitOn "|"
 
 --- Default Writers
 --- ---------------
