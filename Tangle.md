@@ -191,6 +191,7 @@ writeCodeBlock lang h@(Header n _ _)
     where
         commentL "haskell" = "--- "
         commentL "maude"   = "--- "
+        commentL "k"       = "// "
         commentL "c"       = "// "
         commentL "c++"     = "// "
         commentL "bash"    = "# "
