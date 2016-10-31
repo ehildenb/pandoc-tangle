@@ -7,6 +7,17 @@ A set of default tanglers can be accessed with the command `pandoc-tangle`.
 See [the Tangle library](TangleLib.md) for an overview of the library
 functionality (for developing).
 
+Installing
+----------
+
+First make sure to have the tool
+[Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/) installed.
+It comes in some package on most Linux distros, and is available via Homebrew on
+MacOS. Then clone this repository, run `stack init`, followed by `stack build`,
+followed by `stack install`. It will copy an executable to `~/.local/bin` (or
+somewhere like that), which you can either copy to somewhere on your `PATH`, or
+symlink to from somewhere in your `PATH`.
+
 Example Usage
 -------------
 
