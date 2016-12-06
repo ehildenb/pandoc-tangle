@@ -86,6 +86,18 @@ onlyCodeClasses :: [String] -> Block -> Block
 onlyCodeClasses codes b = if codeBlock `implies` hasClass codes $ b then b else Null
 ```
 
+`onlyCode` will keep level 3 or lower headers, along with codeblocks.
+
+``` {.haskell .lib}
+onlyCode :: Pandoc -> Pandoc
+onlyCode = walk onlyCode'
+    where
+        onlyCode' h@(Header n _ _)
+            | n <= 3                 = h
+        onlyCode' cb@(CodeBlock _ _) = cb
+        onlyCode' _                  = Null
+```
+
 ### Drop Functions
 
 The `drop*` functions will look for sections with certain properties and drop

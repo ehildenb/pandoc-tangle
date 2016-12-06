@@ -4,6 +4,7 @@
 --- Main Functionality
 --- ------------------
 
+
 module Main where
 
 import Data.List ( intercalate )
@@ -15,10 +16,10 @@ import Options.Applicative as OPT ( execParser , Parser , ParserInfo
                                   , strOption , subparser , command , argument
                                   , long , short , metavar , help
                                   , helper , info , fullDesc , progDesc , header
-                                  , many , some , (<>) , str , optional
+                                  , many , some , (<>) , str , optional , switch
                                   )
 
-import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header)
+import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header, Null)
                            , nullMeta
                            , readers, Reader(StringReader)
                            , writers, Writer(PureStringWriter)
@@ -37,19 +38,22 @@ main = let opts = info (helper <*> tanglerOpts)
                        <> progDesc "Use Pandoc, as a Tangler."
                        <> OPT.header "pandoc-tangle - a tangler for Pandoc."
                        )
-       in  do Tangler reader writer sect code files <- execParser opts
+       in  do Tangler reader writer sect code stripText files <- execParser opts
               let codeStrip = maybe id takeCode code
               let sectStrip = maybe id takeSect sect
+              let textStrip = if stripText then onlyCode else id
+              let filterNull (Pandoc m bs) = Pandoc m $ filter (not . (==) Null) bs
               input <- case files of
                         [] -> getContents
                         _  -> mapM readFile files >>= return . intercalate "\n"
-              defaultReaders reader input >>= putStrLn . defaultWriters writer . codeStrip . sectStrip
+              defaultReaders reader input >>= putStrLn . defaultWriters writer . filterNull . textStrip . codeStrip . sectStrip
 
-data Tangler = Tangler { reader :: String
-                       , writer :: String
-                       , sect   :: Maybe String
-                       , code   :: Maybe String
-                       , files  :: [String]
+data Tangler = Tangler { reader    :: String
+                       , writer    :: String
+                       , sect      :: Maybe String
+                       , code      :: Maybe String
+                       , stripText :: Bool
+                       , files     :: [String]
                        }
 
 tanglerOpts :: Parser Tangler
@@ -75,31 +79,43 @@ tanglerOpts = Tangler <$> strOption (  long "from"
                                                  <> help "CODEBLOCKS to keep."
                                                  )
                           )
+                      <*> ( switch $ (  long "strip-text"
+                                     <> help "Strip non-header text."
+                                     )
+                          )
                       <*> many (argument OPT.str (metavar "FILES..."))
+
 
 --- Default Readers
 --- ---------------
+
 
 defaultReaders :: String -> String -> IO Pandoc
 defaultReaders reader = case lookup reader readers of
                             Just (StringReader r) -> fmap (fmap handleError) (r (def {readerApplyMacros = True}))
                             _                     -> error $ "Pandoc reader '" ++ reader ++ "' not found."
 
+
 --- Tanglers
 --- --------
 
 --- ### Sections
 
+
 takeSect :: String -> Pandoc -> Pandoc
 takeSect = takeSects . map (B.toList . B.text) . splitOn "|"
 
+
 --- ### Code
+
 
 takeCode :: String -> Pandoc -> Pandoc
 takeCode = takeCodes . splitOn "|"
 
+
 --- Default Writers
 --- ---------------
+
 
 defaultWriters :: String -> Pandoc -> String
 defaultWriters ('c' : 'o' : 'd' : 'e' : '-' : lang)
@@ -113,13 +129,11 @@ defaultWriters writer
 
 writeCodeBlock :: String -> Block -> [String]
 writeCodeBlock lang (CodeBlock (_,ls,_) code)
-    | lang `elem` ls = "" : lines code
-writeCodeBlock lang h@(Header n _ _)
+    | lang `elem` ls = "" : "" : lines code ++ [""]
+writeCodeBlock lang b
     = let writeMD = defaultWriters "markdown"
-          comment = map (commentL lang ++) . lines . writeMD . Pandoc nullMeta $ [h]
-        in  if n == 1
-                then "" : "" : comment
-                else "" : comment
+          comment = map (commentL lang ++) . lines . writeMD . Pandoc nullMeta $ [b]
+      in  "" : comment
     where
         commentL "haskell" = "--- "
         commentL "maude"   = "--- "
@@ -129,4 +143,4 @@ writeCodeBlock lang h@(Header n _ _)
         commentL "bash"    = "# "
         commentL "python"  = "# "
         commentL l         = error $ "Commenting for language '" ++ l ++ "' not supported."
-writeCodeBlock _ _ = []
+

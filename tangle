@@ -2,11 +2,11 @@
 
 # tangle main functionality
 pandoc-tangle --from=markdown --to=markdown --code=example --section='Pandoc Tangle' Tangle.md > README.md
-pandoc-tangle --from=markdown --to=code-haskell --code=main Tangle.md > src/Main.hs
+pandoc-tangle --from=markdown --to=code-haskell --code=main --strip-text Tangle.md > src/Main.hs
 
 # tangle library functionality
 pandoc-tangle --from=markdown --to=markdown --code=lib --section='Tangle' Tangle.md > TangleLib.md
-pandoc-tangle --from=markdown --to=code-haskell --code=lib Tangle.md > src/Text/Pandoc/Tangle.hs
+pandoc-tangle --from=markdown --to=code-haskell --code=lib --strip-text Tangle.md > src/Text/Pandoc/Tangle.hs
 
 # build executable
 stack build

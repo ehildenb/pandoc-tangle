@@ -1,6 +1,7 @@
 --- Tangle
 --- ======
 
+
 module Text.Pandoc.Tangle where
 
 import Data.List ((\\))
@@ -14,16 +15,22 @@ import Text.Pandoc      ( Pandoc(Pandoc)
                         )
 import Text.Pandoc.Walk ( walk )
 
+
 --- Document Manipulation
 --- ---------------------
 
 --- ### Take Functions
 
+
 takeSects :: [[Inline]] -> Pandoc -> Pandoc
 takeSects names (Pandoc m bs) = Pandoc m $ takeSectWith (sectNames names) bs
 
+
+
 takeSectWithCode :: Pandoc -> Pandoc
 takeSectWithCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
+
+
 
 takeSectWith :: ([Block] -> Bool) -> [Block] -> [Block]
 takeSectWith _ [] = []
@@ -41,6 +48,8 @@ takeSectWith p bs = let beforeH = takeWhile (not . header) bs
                         afterH  = takeSectWith p . dropWhile (not . header) $ bs
                     in  if p beforeH then beforeH ++ afterH else afterH
 
+
+
 takeCodes :: [String] -> Pandoc -> Pandoc
 takeCodes codes = walk (onlyCodeClasses codes)
 
@@ -50,7 +59,19 @@ onlyCodeClass code b = if codeBlock `implies` isClass code $ b then b else Null
 onlyCodeClasses :: [String] -> Block -> Block
 onlyCodeClasses codes b = if codeBlock `implies` hasClass codes $ b then b else Null
 
+
+
+onlyCode :: Pandoc -> Pandoc
+onlyCode = walk onlyCode'
+    where
+        onlyCode' h@(Header n _ _)
+            | n <= 3                 = h
+        onlyCode' cb@(CodeBlock _ _) = cb
+        onlyCode' _                  = Null
+
+
 --- ### Drop Functions
+
 
 dropSects :: [[Inline]] -> Pandoc -> Pandoc
 dropSects = foldl (\bf n -> bf . dropSect n) id
@@ -63,13 +84,19 @@ dropSect name (Pandoc m bs)
                            (h@(Header n _ _) : bs) -> dropWhile (not . headerN (<= n)) bs
       in  Pandoc m $ beforeSect ++ afterSect
 
+
+
 dropClasses :: [String] -> Block -> Block
 dropClasses classes (CodeBlock (_, cs, _) code) = CodeBlock ("", cs \\ classes, []) code
 dropClasses classes (Header n  (_, cs, _) h)    = Header n  ("", cs \\ classes, []) h
 dropClasses classes b                           = b
 
+
+
 dropSectWithoutCode :: Pandoc -> Pandoc
 dropSectWithoutCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
+
+
 
 dropMath :: Pandoc -> Pandoc
 dropMath
@@ -77,8 +104,10 @@ dropMath
           nullMath b                   = b
       in  walk nullMath
 
+
 --- Predicates over Documents
 --- -------------------------
+
 
 sectNames :: [[Inline]] -> [Block] -> Bool
 sectNames names = or . concatMap (\b -> map (flip headerName b) names)
@@ -116,8 +145,10 @@ getAttr _                  = nullAttr
 implies :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 implies p1 p2 a = if p1 a then p2 a else True
 
+
 --- Metadata Extraction
 --- -------------------
+
 
 --- make a field optional with a default
 withDefault :: a -> Maybe a -> Maybe a
@@ -170,3 +201,4 @@ inlineToStr (Str s)       = s
 inlineToStr Space         = " "
 inlineToStr (Code _ code) = "`" ++ code ++ "`"
 inlineToStr _             = ""
+
