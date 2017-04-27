@@ -12,12 +12,12 @@ import Data.List ((\\))
 import qualified Data.Map as M (Map, lookup, toList)
 
 import Text.Pandoc      ( Pandoc(Pandoc)
-                        , Block(CodeBlock, Header, Para, Null)
+                        , Block(CodeBlock, Header, Para, Null, Div)
                         , Inline(Str, Space, Code, Math)
                         , Attr , nullAttr
                         , Meta(Meta) , MetaValue(MetaMap, MetaInlines, MetaList, MetaString)
                         )
-import Text.Pandoc.Walk ( walk )
+import Text.Pandoc.Walk ( walk, walkM )
 ```
 
 Document Manipulation
@@ -146,6 +146,16 @@ dropMath
     = let nullMath (Para [(Math _ _)]) = Null
           nullMath b                   = b
       in  walk nullMath
+```
+
+`flatDivs` will flatten all `div` in a document into their parents.
+
+``` {.haskell .lib}
+flatDivs :: Pandoc -> Pandoc
+flatDivs (Pandoc m bs) = Pandoc m (walkM flatDivs' (Div nullAttr bs))
+    where
+        flatDivs' (Div _ bs) = bs
+        flatDivs' b          = [b]
 ```
 
 Predicates over Documents

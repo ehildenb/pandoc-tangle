@@ -19,7 +19,7 @@ import Options.Applicative as OPT ( execParser , Parser , ParserInfo
                                   , many , some , (<>) , str , optional , switch
                                   )
 
-import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header, Null)
+import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header, Null, Div)
                            , nullMeta
                            , readers, Reader(StringReader)
                            , writers, Writer(PureStringWriter)
@@ -38,22 +38,22 @@ main = let opts = info (helper <*> tanglerOpts)
                        <> progDesc "Use Pandoc, as a Tangler."
                        <> OPT.header "pandoc-tangle - a tangler for Pandoc."
                        )
-       in  do Tangler reader writer sect code stripText files <- execParser opts
-              let codeStrip = maybe id takeCode code
-              let sectStrip = maybe id takeSect sect
-              let textStrip = if stripText then onlyCode else id
-              let filterNull (Pandoc m bs) = Pandoc m $ filter (not . (==) Null) bs
-              input <- case files of
-                        [] -> getContents
-                        _  -> mapM readFile files >>= return . intercalate "\n"
-              defaultReaders reader input >>= putStrLn . defaultWriters writer . filterNull . textStrip . codeStrip . sectStrip
+       in  do Tangler reader writer sect code stripText flattenDivs files <- execParser opts
+              let flatDivs = id
+              let transformer = (\(Pandoc m bs) -> Pandoc m $ filter (not . (==) Null) bs)
+                              . if stripText then onlyCode else id
+                              . maybe id takeCode code
+                              . maybe id takeSect sect
+                              . if flattenDivs then flatDivs else id
+              mapM readFile files >>= defaultReaders reader . intercalate "\n" >>= putStrLn . defaultWriters writer . transformer
 
-data Tangler = Tangler { reader    :: String
-                       , writer    :: String
-                       , sect      :: Maybe String
-                       , code      :: Maybe String
-                       , stripText :: Bool
-                       , files     :: [String]
+data Tangler = Tangler { reader      :: String
+                       , writer      :: String
+                       , sect        :: Maybe String
+                       , code        :: Maybe String
+                       , stripText   :: Bool
+                       , flattenDivs :: Bool
+                       , files       :: [String]
                        }
 
 tanglerOpts :: Parser Tangler
@@ -81,6 +81,10 @@ tanglerOpts = Tangler <$> strOption (  long "from"
                           )
                       <*> ( switch $ (  long "strip-text"
                                      <> help "Strip non-header text."
+                                     )
+                          )
+                      <*> ( switch $ (  long "flatten-divs"
+                                     <> help "Flatten `div` tags in document."
                                      )
                           )
                       <*> many (argument OPT.str (metavar "FILES..."))
