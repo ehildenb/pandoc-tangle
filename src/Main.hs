@@ -145,6 +145,8 @@ writeCodeBlock lang b
         commentL "c"       = "// "
         commentL "c++"     = "// "
         commentL "bash"    = "# "
+        commentL "sh"      = "# "
+        commentL "zsh"     = "# "
         commentL "python"  = "# "
         commentL l         = error $ "Commenting for language '" ++ l ++ "' not supported."
 
