@@ -1,6 +1,10 @@
 --- Tangle
 --- ======
 
+--- This module can be used to aid tangling documents in Pandoc's internal
+--- representation. Metadata can be used to inform the derivation process, and
+--- various small document manipulators are supplied.
+
 
 module Text.Pandoc.Tangle where
 
@@ -19,17 +23,37 @@ import Text.Pandoc.Walk ( walk, walkM )
 --- Document Manipulation
 --- ---------------------
 
+--- These functions are of type `Pandoc -> Pandoc`, so they can be used to build up
+--- document manipulations using function composition.
+
 --- ### Take Functions
+
+--- In general, the `take*` functions will look for sections that have certain
+--- properties and keep those sections along with all super-sections. Super-sections
+--- text which is not part of one of it's sub-sections will be kept as well.
+
+--- The `takeSects` function will only keep sections of the document which are in
+--- the supplied list of section names. It will also take super-sections of any
+--- section that is kept.
 
 
 takeSects :: [[Inline]] -> Pandoc -> Pandoc
 takeSects names (Pandoc m bs) = Pandoc m $ takeSectWith (sectNames names) bs
 
 
+--- `takeSectWithCode` will only take sections which have codeblocks in them. This
+--- is useful for creating a minimal "skeleton" document to write a code-file from.
+
 
 takeSectWithCode :: Pandoc -> Pandoc
 takeSectWithCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
 
+
+--- `takeSectWith` accepts a predicate over a section (so a predicate over the list
+--- of blocks that make up a section) and keeps sections which match that predicate.
+--- Note that the predicate is run *only* over the section header and the
+--- section-text, *not* including the sub-section headers or text of that section.
+--- If any of the sub-sections of a section are kept, the section is kept as well.
 
 
 takeSectWith :: ([Block] -> Bool) -> [Block] -> [Block]
@@ -49,6 +73,8 @@ takeSectWith p bs = let beforeH = takeWhile (not . header) bs
                     in  if p beforeH then beforeH ++ afterH else afterH
 
 
+--- `takeCodes` will only keep code marked with the specified classes.
+
 
 takeCodes :: [String] -> Pandoc -> Pandoc
 takeCodes codes = walk (onlyCodeClasses codes)
@@ -59,6 +85,8 @@ onlyCodeClass code b = if codeBlock `implies` isClass code $ b then b else Null
 onlyCodeClasses :: [String] -> Block -> Block
 onlyCodeClasses codes b = if codeBlock `implies` hasClass codes $ b then b else Null
 
+
+--- `onlyCode` will keep level 3 or lower headers, along with codeblocks.
 
 
 onlyCode :: Pandoc -> Pandoc
@@ -71,6 +99,13 @@ onlyCode = walk onlyCode'
 
 
 --- ### Drop Functions
+
+--- The `drop*` functions will look for sections with certain properties and drop
+--- those sections and all sub-sections.
+
+--- `dropSects` will remove all sections which have names in the supplied list of
+--- section names. It uses `dropSect`, which removes only one section name from a
+--- document.
 
 
 dropSects :: [[Inline]] -> Pandoc -> Pandoc
@@ -85,6 +120,9 @@ dropSect name (Pandoc m bs)
       in  Pandoc m $ beforeSect ++ afterSect
 
 
+--- `dropClasses` will remove the listed class attributes from the code-blocks and
+--- headers to avoid clutter in the final document.
+
 
 dropClasses :: [String] -> Block -> Block
 dropClasses classes (CodeBlock (_, cs, _) code) = CodeBlock ("", cs \\ classes, []) code
@@ -92,10 +130,15 @@ dropClasses classes (Header n  (_, cs, _) h)    = Header n  ("", cs \\ classes, 
 dropClasses classes b                           = b
 
 
+--- `dropSectWithoutCode` will remove any section that contains no code.
+
 
 dropSectWithoutCode :: Pandoc -> Pandoc
 dropSectWithoutCode (Pandoc m bs) = Pandoc m $ takeSectWith (any codeBlock) bs
 
+
+--- `dropMath` will remove all math from a document. It's useful if you have some
+--- target which doesn't handle math very well.
 
 
 dropMath :: Pandoc -> Pandoc
@@ -104,6 +147,8 @@ dropMath
           nullMath b                   = b
       in  walk nullMath
 
+
+--- `flatDivs` will flatten all `div` in a document into their parents.
 
 
 flatDivs :: Pandoc -> Pandoc

@@ -1,8 +1,22 @@
 --- Pandoc Tangle
 --- =============
 
+--- This library allows for tangling documents in Pandoc's internal representation.
+--- A set of default tanglers can be accessed with the command `pandoc-tangle`.
+
+--- See [the Tangle library](TangleLib.md) for an overview of the library
+--- functionality (for developing).
+
 --- Main Functionality
 --- ------------------
+
+--- The default tangler imports `Pandoc` and the library tangler to implement some
+--- simple defaults.
+
+--- Run `stack init`, followed by `stack build` to build the executable. You can run
+--- `stack install` to place it at `~/.local/bin`.
+
+--- See `pandoc-tangle --help` for usage.
 
 
 module Main where
@@ -93,6 +107,11 @@ tanglerOpts = Tangler <$> strOption (  long "from"
 --- Default Readers
 --- ---------------
 
+--- Only the default `readers` [from
+--- Pandoc](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
+--- are supported. The `READER` specified on the command-line will be looked up in
+--- the list of Pandoc readers.
+
 
 defaultReaders :: String -> String -> IO Pandoc
 defaultReaders reader = case lookup reader readers of
@@ -105,12 +124,22 @@ defaultReaders reader = case lookup reader readers of
 
 --- ### Sections
 
+--- The `SECTIONS` input is the name of a section to keep in the document.
+--- Super-sections will be preserved as well. To include multiple sections separate
+--- them with `|`, eg "Section 1|Section 4.3" would grab both "Section 1" and
+--- "Section 4.3".
+
 
 takeSect :: String -> Pandoc -> Pandoc
 takeSect = takeSects . map (B.toList . B.text) . splitOn "|"
 
 
 --- ### Code
+
+--- The `CODEBLOCKS` input is the class of code-blocks to keep in the document. Any
+--- code-blocks not labelled with `CODEBLOCKS` will not be kept. To include multiple
+--- code classes separate them with `|`, eg "main|lib" would include code classes
+--- marked with either "main" or "lib".
 
 
 takeCode :: String -> Pandoc -> Pandoc
@@ -119,6 +148,14 @@ takeCode = takeCodes . splitOn "|"
 
 --- Default Writers
 --- ---------------
+
+--- The default `writers` [from
+--- Pandoc](https://hackage.haskell.org/package/pandoc-1.17.2/docs/Text-Pandoc.html#g:4)
+--- are supported. The `WRITER` specified on the command-line will be looked up in
+--- the list of Pandoc writers.
+
+--- In addition, the `code-LANG` writer will produce just the code, where `LANG` is
+--- the programming language comment-style to use for headers.
 
 
 defaultWriters :: String -> Pandoc -> String
@@ -140,7 +177,7 @@ writeCodeBlock lang b
       in  "" : comment
     where
         commentL "haskell" = "--- "
-        commentL "maude"   = "--- "
+        commentL "maude"   = "--- ; "
         commentL "k"       = "// "
         commentL "c"       = "// "
         commentL "c++"     = "// "

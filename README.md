@@ -7,6 +7,11 @@ A set of default tanglers can be accessed with the command `pandoc-tangle`.
 See [the Tangle library](TangleLib.md) for an overview of the library
 functionality (for developing).
 
+### Outstanding Bug
+
+-   Using option `--strip-text` changes what parts of the document make it
+    through incorrectly.
+
 Installing
 ----------
 
