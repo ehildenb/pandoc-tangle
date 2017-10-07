@@ -10,5 +10,5 @@ executable pandoc-tangle
     main-is:            Main.hs
     ghc-options:        -threaded -rtsopts -with-rtsopts=-N
     build-depends:      base , containers , optparse-applicative , split
-                      , pandoc <= 1.18 , pandoc-types
+                      , pandoc <= 1.18 && >= 1.17 , pandoc-types
     default-language:   Haskell2010
