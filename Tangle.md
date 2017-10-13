@@ -78,7 +78,8 @@ import Text.Pandoc         ( Pandoc(Pandoc), Block(CodeBlock, Header, Null, Div)
                            )
 import Text.Pandoc.Options ( def
                            , readerApplyMacros
-                           , writerColumns
+                           , WrapOption(WrapPreserve)
+                           , writerWrapText
                            )
 import Text.Pandoc.Error   ( handleError )
 import qualified Text.Pandoc.Builder as B ( toList , text )
@@ -203,7 +204,7 @@ defaultWriters ('c' : 'o' : 'd' : 'e' : '-' : lang)
       in  dropWhile (== '\n') . writeCodeString . blocks . dropSectWithoutCode
 defaultWriters writer
     = case lookup writer writers of
-        Just (PureStringWriter w) -> w (def {writerColumns = 80})
+        Just (PureStringWriter w) -> w (def {writerWrapText = WrapPreserve})
         _ -> error $ "Pandoc writer '" ++ writer ++ "' not found."
 
 writeCodeBlock :: String -> Block -> [String]
