@@ -18,7 +18,7 @@ Installing
 First make sure to have the tool
 [Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/) installed.
 It comes in some package on most Linux distros, and is available via Homebrew on
-MacOS. Then clone this repository, run `stack init`, followed by `stack build`,
+MacOS. Then clone this repository, run `stack setup`, followed by `stack build`,
 followed by `stack install`. It will copy an executable to `~/.local/bin` (or
 somewhere like that), which you can either copy to somewhere on your `PATH`, or
 symlink to from somewhere in your `PATH`.
@@ -51,8 +51,8 @@ Main Functionality
 The default tangler imports `Pandoc` and the library tangler to implement some
 simple defaults.
 
-Run `stack init`, followed by `stack build` to build the executable. You can run
-`stack install` to place it at `~/.local/bin`.
+Run `stack setup`, followed by `stack build` to build the executable. You can
+run `stack install` to place it at `~/.local/bin`.
 
 See `pandoc-tangle --help` for usage.
 
