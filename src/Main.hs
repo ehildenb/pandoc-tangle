@@ -13,8 +13,8 @@
 --- The default tangler imports `Pandoc` and the library tangler to implement some
 --- simple defaults.
 
---- Run `stack init`, followed by `stack build` to build the executable. You can run
---- `stack install` to place it at `~/.local/bin`.
+--- Run `stack setup`, followed by `stack build` to build the executable. You can
+--- run `stack install` to place it at `~/.local/bin`.
 
 --- See `pandoc-tangle --help` for usage.
 
