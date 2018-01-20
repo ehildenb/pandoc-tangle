@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 # tangle main functionality
 pandoc-tangle --from=markdown --to=markdown --code=example --section='Pandoc Tangle' Tangle.md > README.md
