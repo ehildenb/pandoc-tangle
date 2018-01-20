@@ -183,6 +183,7 @@ writeCodeBlock lang b
         commentL "k"       = "// "
         commentL "c"       = "// "
         commentL "c++"     = "// "
+        commentL "go"      = "// "
         commentL "bash"    = "# "
         commentL "sh"      = "# "
         commentL "zsh"     = "# "
