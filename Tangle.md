@@ -1,11 +1,22 @@
 Pandoc Tangle
 =============
 
-This library allows for tangling documents in Pandoc's internal representation.
-A set of default tanglers can be accessed with the command `pandoc-tangle`.
+This library builds upon the [Pandoc library] to assist with [literate
+programming]. From Pandoc's internal representation of a document
+containing explanatory text and code it produces the "tangled" code
+that is meant to be given to a compiler or interpreter. (Pandoc itself
+produces the "woven" documents, which are the nicely formatted
+explanatory text and code intended to be read by humans.) In the long
+term some of this may ideally be integrated with Pandoc itself.
 
-See [the Tangle library](TangleLib.md) for an overview of the library
-functionality (for developing).
+The command-line program `pandoc-tangle`, lets you use the library's
+tanglers.
+
+Developers can look at [TangleLib.md](TangleLib.md) for an overview of
+the library.
+
+[Pandoc library]: https://github.com/jgm/pandoc
+[literate programming]: https://en.wikipedia.org/wiki/Literate_programming
 
 ### Outstanding Bug
 
