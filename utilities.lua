@@ -60,6 +60,12 @@ function deepcompare(t1,t2,ignore_mt)
     return true
 end
 
+--- # Take tail of table
+
+function tail(tab)
+    return { select(2, unpack(tab)) }
+end
+
 --- # Table element containment
 
 function table.contains(tab, elem)
