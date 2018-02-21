@@ -1,3 +1,5 @@
+require "css-selector"
+
 local blocks={}
 
 --- css-sel ::= "." class-id
@@ -53,13 +55,16 @@ local function keep_only_lines(str)
 end
 
 function Doc(body, metadata, variables)
-  local targets = split_classes(metadata.code or '')
+  local targets = parse(metadata.code or '*')
   local block = 1
   local function replace()
-    local classes = blocks[block][1]
+    local classes = {}
+    for k,_ in pairs(blocks[block][1]) do
+        table.insert(classes,k)
+    end
     local code = blocks[block][2]
     block = block + 1
-    if keep(classes,targets) then
+    if eval(targets, classes) then
       return code
     else
       return keep_only_lines(code)
