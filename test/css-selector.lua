@@ -84,6 +84,12 @@ tests[4] = { input  = ".k .blah :not(.foo.bar)"
            , ast    = { orExp = { { andExp = { { id = "k" } , { id = "blah" } , { notExp = { orExp = { { andExp = { { id = "foo" } , { id = "bar" } } } } } } } } } }
            }
 
+tests[5] = { input  = ".k , .rvk , :not(.uiuck)"
+           , tokens = { "." , "k" , " , " , "." , "rvk" , " , " , ":not(" , "." , "uiuck" , ")" }
+           , groups = { { id = "k" } , OR , { id = "rvk" } , OR , { notExp = { { id = "uiuck" } } } }
+           , ast    = { orExp = { { andExp = { { notExp = { orExp = { { andExp = { { id = "uiuck" } } } } } } } } , { andExp = { { id = "rvk" } } } , { andExp = { { id = "k" } } } } }
+           }
+
 --- Run Tests
 --- ---------
 
