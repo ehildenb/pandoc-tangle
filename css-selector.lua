@@ -65,6 +65,21 @@ function group_tokens(tokenized)
     return grouped_tokens
 end
 
-function parse_tokens(tokenized)
-    return tokenized
+function parse_groups(grouped_tokens)
+    local current_expression = { orExp = { { andExp = {} } } }
+    local current_group = 1
+    while grouped_tokens[current_group] do
+        if grouped_tokens[current_group]["id"] then
+            table.insert(current_expression["orExp"][1]["andExp"], grouped_tokens[current_group])
+            current_group = current_group + 1
+        elseif grouped_tokens[current_group]["notExp"] then
+            local parsed_not = { notExp = parse_groups(grouped_tokens[current_group]["notExp"]) }
+            table.insert(current_expression["orExp"][1]["andExp"], parsed_not)
+            current_group = current_group + 1
+        elseif grouped_tokens[current_group] == OR then
+            table.insert(current_expression["orExp"], 1, { andExp = {} })
+            current_group = current_group + 1
+        end
+    end
+    return current_expression
 end
