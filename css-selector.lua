@@ -32,3 +32,7 @@ function tokenize(selector_string)
     end
     return tokenized_input
 end
+
+function parse_tokens(tokenized)
+    return tokenized
+end

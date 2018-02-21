@@ -25,20 +25,23 @@ end
 tests = {}
 
 tests[1] = { input  = ".test .input"
-           , tokens = {".", "test", " ", ".", "input"}
-           , ast    = { andExp = { { idExp = "test" } , { idExp = "input" } } }
+           , tokens = { "." , "test" , " " , "." , "input" }
+           , ast    = { orExp = { andExp = { { idExp = "test" } , { idExp = "input" } } } }
            }
 
-tests[2] = { input  = "test input"
-           , tokens = { "test" , " ", "input" }
+tests[2] = { input  = ".test , .input"
+           , tokens = { "." , "test"  , " , " , "." , "input" }
+           , ast    = { orExp = { { andExp = { id = "test" } } , { andExp = { id = "input" } } } }
            }
 
 tests[3] = { input  = ".k.transferFrom-then-branch:not(.transferFrom-else-branch)"
            , tokens = { "." , "k" , "." , "transferFrom-then-branch" , ":not(" , "." , "transferFrom-else-branch" , ")" }
+           , ast    = { orExp = { { andExp = { { id = "k" } , { id = "transferFrom-then-branch" } , { notExp = { orExp = { andExp = { id = "transferFrom-else-branch" } } } } } } } }
            }
 
 tests[4] = { input  = ".k .blah :not(.foo.bar)"
            , tokens = { "." , "k" , " " , "." , "blah" , " " , ":not(" , "." , "foo" , "." , "bar" , ")" }
+           , ast    = { orExp = { andExp = { { id = "k" } , { id = "blah" } , { notExp = { orExp = { andExp = { { id = "foo" } , { id = "bar" } } } } } } } }
            }
 
 --- Test Tokenizer
@@ -46,8 +49,14 @@ tests[4] = { input  = ".k .blah :not(.foo.bar)"
 
 for i,_ in pairs(tests) do
     print("Test: " .. i)
+
     print("testing tokenizer...")
     if not deepcompare(tokenize(tests[i]["input"]), tests[i]["tokens"]) then
         error("Tokenizer test failure: " .. i, 1)
+    end
+
+    print("testing parser...")
+    if not deepcompare(parse_tokens(tests[i]["tokens"]), tests[i]["ast"]) then
+        error("Parser test failure: " .. i, 1)
     end
 end
