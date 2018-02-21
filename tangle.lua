@@ -2,28 +2,6 @@ require "css-selector"
 
 local blocks={}
 
---- css-sel ::= "." class-id
----           | ":not(" css-sel ")"
----           | css-sel css-sel
----           > css-sel "," css-sel
-
---- Get if the current code block should be kept
--- @param classes tags on the code block
--- @param targets tags selected on the command line
--- @return true if the selected target keeps this code block, false otherwise
---         all targets in targets must be in classes to keep the code block
---         eventually we should support generic css-selector tags
-local function keep(classes,targets)
-  local has_target = false
-  local has_any = false
-  for k,_ in pairs(targets) do
-    if not classes[k] then
-        return false
-    end
-  end
-  return true
-end
-
 local function split_classes(str)
   local classes = {}
   for class in string.gmatch(str, "[^ ]+") do
