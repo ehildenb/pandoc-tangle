@@ -20,7 +20,23 @@ function deepcompare(t1,t2,ignore_mt)
     return true
 end
 
-print(deepcompare(tokenize("test input"), {"test", " ", "input"}))
+--- Test triples
+--- ------------
+tests = {}
+
+tests[1] = { input  = ".test .input"
+           , tokens = {".", "test", " ", ".", "input"}
+           , ast    = { andExp = { { idExp = "test" } , { idExp = "input" } } }
+           }
+
+
+--- Test Tokenizer
+--- --------------
+
+for i,_ in pairs(tests) do
+    print(deepcompare(tokenize(tests[i]["input"]), tests[i]["tokens"]))
+end
+
 print(deepcompare(tokenize("test input"), {"test", " "}))
 print(deepcompare(tokenize(".k.transferFrom-then-branch:not(.transferFrom-else-branch)"),
             {".", "k", ".", "transferFrom-then-branch", ":not(", ".", "transferFrom-else-branch", ")"}))
