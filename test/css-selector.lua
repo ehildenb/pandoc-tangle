@@ -20,8 +20,44 @@ function deepcompare(t1,t2,ignore_mt)
     return true
 end
 
+function table.val_to_str ( v )
+    if "string" == type( v ) then
+        v = string.gsub( v, "\n", "\\n" )
+        if string.match( string.gsub(v,"[^'\"]",""), '^"+$' ) then
+            return "'" .. v .. "'"
+        end
+        return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
+    else
+        return "table" == type( v ) and table.tostring( v ) or tostring( v )
+    end
+end
+
+function table.key_to_str ( k )
+    if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
+        return k
+    else
+        return "[" .. table.val_to_str( k ) .. "]"
+    end
+end
+
+function table.tostring( tbl )
+    local result, done = {}, {}
+    for k, v in ipairs( tbl ) do
+        table.insert( result, table.val_to_str( v ) )
+        done[ k ] = true
+    end
+    for k, v in pairs( tbl ) do
+        if not done[ k ] then
+            table.insert( result,
+            table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
+        end
+    end
+    return "{" .. table.concat( result, "," ) .. "}"
+end
+
 --- Test triples
 --- ------------
+
 tests = {}
 
 tests[1] = { input  = ".test .input"
@@ -48,19 +84,26 @@ tests[4] = { input  = ".k .blah :not(.foo.bar)"
            , ast    = { orExp = { andExp = { { id = "k" } , { id = "blah" } , { notExp = { orExp = { andExp = { { id = "foo" } , { id = "bar" } } } } } } } }
            }
 
---- Test Tokenizer
---- --------------
+--- Run Tests
+--- ---------
+
+function test_error(expected, actual)
+    print("expected: " .. table.tostring(expected) .. "\nactual:   " .. table.tostring(actual))
+    error("test failure!", 1)
+end
 
 for i,_ in pairs(tests) do
     print("Test: " .. i)
 
     print("testing tokenizer...")
-    if not deepcompare(tokenize(tests[i]["input"]), tests[i]["tokens"]) then
-        error("Tokenizer test failure!", 1)
+    local tokenized = tokenize(tests[i]["input"])
+    if not deepcompare(tokenized, tests[i]["tokens"]) then
+        test_error(tests[i]["tokens"], tokenized)
     end
 
     print("testing token grouper...")
-    if not deepcompare(group_tokens(tests[i]["tokens"]), tests[i]["groups"]) then
-        error("Token grouper failure!", 1)
+    local grouped = group_tokens(tests[i]["tokens"])
+    if not deepcompare(grouped, tests[i]["groups"]) then
+        test_error(tests[i]["groups"], grouped)
     end
 end
