@@ -20,13 +20,10 @@ function tokenize(selector_string)
     local match = ""
 
     while string.len(selector_string) > 0 do
-        --- print("current string: " .. selector_string)
         found_token = false
         for _,token in pairs(tokens) do
-            --- print("matching token: " .. token)
             match = matches_token(selector_string, token)
             if match then
-                --- print("token matched!")
                 found_token = true
                 selector_string,_ = string.gsub(selector_string, token, '', 1)
                 table.insert(tokenized_input, match)
