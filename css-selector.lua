@@ -92,11 +92,7 @@ end
 --- =========
 
 function eval(parsed_expression, tag_set)
-    --- print("evaluating: " .. table.tostring(parsed_expression))
-    --- print("on input:   " .. table.tostring(tag_set))
     if parsed_expression["id"] then
-        --- print("identifier result: ")
-        --- print(table.contains(tag_set, parsed_expression["id"]))
         return table.contains(tag_set, parsed_expression["id"])
     elseif parsed_expression["notExp"] then
         return not eval(parsed_expression["notExp"], tag_set)
