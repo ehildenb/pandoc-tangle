@@ -1,3 +1,10 @@
+require "utilities"
+
+--- Parser
+--- ======
+
+--- # Tokenizer
+
 IDSTART  = '%.'
 ID       = '[%a%d-]+'
 NOTSTART = ':not%('
@@ -6,10 +13,6 @@ AND      = '%s+'
 OR       = '%s*,%s*'
 
 tokens = { IDSTART , ID , NOTSTART , NOTEND , OR , AND }
-
-function matches_token(input, token)
-    return string.match(input, '^' .. token, 1)
-end
 
 function tokenize(selector_string)
     local tokenized_input = {}
@@ -36,6 +39,8 @@ function tokenize(selector_string)
     end
     return tokenized_input
 end
+
+--- # Token Grouper
 
 function group_tokens(tokenized)
     local grouped_tokens = {}
@@ -64,6 +69,8 @@ function group_tokens(tokenized)
     end
     return grouped_tokens
 end
+
+--- # Group Parser
 
 function parse_groups(grouped_tokens)
     local current_expression = { orExp = { { andExp = {} } } }
