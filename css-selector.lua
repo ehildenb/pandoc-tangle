@@ -95,6 +95,12 @@ function parse_groups(grouped_tokens)
     return current_expression
 end
 
+--- # Main parser
+
+function parse(css_selector)
+    return parse_groups(group_tokens(tokenize(css_selector)))
+end
+
 --- Evaluator
 --- =========
 

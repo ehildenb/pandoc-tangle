@@ -117,6 +117,10 @@ for i,_ in pairs(tests) do
     local parsed = parse_groups(tests[i]["groups"])
     assert_equal(tests[i]["ast"], parsed)
 
+    print("testing main parser...")
+    local parsed = parse(tests[i]["input"])
+    assert_equal(tests[i]["ast"], parsed)
+
     print("testing expression evaluator...")
     for _,etest in pairs(tests[i]["eval"]) do
         local evaled = { tset = etest["tset"] , result = eval(tests[i]["ast"], etest["tset"]) }
