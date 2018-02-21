@@ -9,30 +9,62 @@ tests[1] = { input  = ".test .input"
            , tokens = { "." , "test" , " " , "." , "input" }
            , groups = { { id = "test" } , { id = "input" } }
            , ast    = { orExp = { { andExp = { { id = "test" } , { id = "input" } } } } }
+           , eval   = { { tset = { }                            , result = false }
+                      , { tset = { "test" }                     , result = false }
+                      , { tset = { "test" , "input" }           , result = true  }
+                      , { tset = { "test" , "input" , "extra" } , result = true  }
+                      , { tset = { "extra" }                    , result = false }
+                      }
            }
 
 tests[2] = { input  = ".test , .input"
            , tokens = { "." , "test"  , " , " , "." , "input" }
            , groups = { { id = "test" } , OR , { id = "input" } }
            , ast    = { orExp = { { andExp = { { id = "input" } } } , { andExp = { { id = "test" } } } } }
+           , eval   = { { tset = { }                            , result = false }
+                      , { tset = { "test" }                     , result = true  }
+                      , { tset = { "test" , "input" }           , result = true  }
+                      , { tset = { "test" , "input" , "extra" } , result = true  }
+                      , { tset = { "extra" }                    , result = false }
+                      }
            }
 
 tests[3] = { input  = ".k.transferFrom-then-branch:not(.transferFrom-else-branch)"
            , tokens = { "." , "k" , "." , "transferFrom-then-branch" , ":not(" , "." , "transferFrom-else-branch" , ")" }
            , groups = { { id = "k" } , { id = "transferFrom-then-branch" } , { notExp = { { id = "transferFrom-else-branch" } } } }
            , ast    = { orExp = { { andExp = { { id = "k" } , { id = "transferFrom-then-branch" } , { notExp = { orExp = { { andExp = { { id = "transferFrom-else-branch" } } } } } } } } } }
+           , eval   = { { tset = { } , result = false }
+                      , { tset = { "k" }                                                           , result = false }
+                      , { tset = { "k" , "transferFrom-then-branch" }                              , result = true  }
+                      , { tset = { "k" , "transferFrom-then-branch" , "transferFrom-else-branch" } , result = false }
+                      , { tset = { "k" , "transferFrom-else-branch" }                              , result = false }
+                      }
            }
 
 tests[4] = { input  = ".k .blah :not(.foo.bar)"
            , tokens = { "." , "k" , " " , "." , "blah" , " " , ":not(" , "." , "foo" , "." , "bar" , ")" }
            , groups = { { id = "k" } , { id = "blah" } , { notExp = { { id = "foo" } , { id = "bar" } } } }
            , ast    = { orExp = { { andExp = { { id = "k" } , { id = "blah" } , { notExp = { orExp = { { andExp = { { id = "foo" } , { id = "bar" } } } } } } } } } }
+           , eval   = { { tset = { }                              , result = false }
+                      , { tset = { "k" , "blah" }                 , result = true  }
+                      , { tset = { "k" , "blah" , "foo" }         , result = true  }
+                      , { tset = { "k" , "blah" , "bar" }         , result = true  }
+                      , { tset = { "k" , "blah" , "foo" , "bar" } , result = false }
+                      , { tset = { "k" , "foo" }                  , result = false }
+                      }
            }
 
 tests[5] = { input  = ".k , .rvk , :not(.uiuck)"
            , tokens = { "." , "k" , " , " , "." , "rvk" , " , " , ":not(" , "." , "uiuck" , ")" }
            , groups = { { id = "k" } , OR , { id = "rvk" } , OR , { notExp = { { id = "uiuck" } } } }
            , ast    = { orExp = { { andExp = { { notExp = { orExp = { { andExp = { { id = "uiuck" } } } } } } } } , { andExp = { { id = "rvk" } } } , { andExp = { { id = "k" } } } } }
+           , eval   = { { tset = { }                 , result = true  }
+                      , { tset = { "k" }             , result = true  }
+                      , { tset = { "rvk" }           , result = true  }
+                      , { tset = { "extra" }         , result = true  }
+                      , { tset = { "uiuck" }         , result = false }
+                      , { tset = { "rvk" , "uiuck" } , result = true  }
+                      }
            }
 
 --- Run Tests
@@ -59,4 +91,10 @@ for i,_ in pairs(tests) do
     print("testing group parser...")
     local parsed = parse_groups(tests[i]["groups"])
     assert_equal(tests[i]["ast"], parsed)
+
+    print("testing expression evaluator...")
+    for _,etest in pairs(tests[i]["eval"]) do
+        local evaled = { tset = etest["tset"] , result = eval(tests[i]["ast"], etest["tset"]) }
+        assert_equal(etest, evaled)
+    end
 end
