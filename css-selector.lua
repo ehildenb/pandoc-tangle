@@ -87,3 +87,35 @@ function parse_groups(grouped_tokens)
     end
     return current_expression
 end
+
+--- Evaluator
+--- =========
+
+function eval(parsed_expression, tag_set)
+    --- print("evaluating: " .. table.tostring(parsed_expression))
+    --- print("on input:   " .. table.tostring(tag_set))
+    if parsed_expression["id"] then
+        --- print("identifier result: ")
+        --- print(table.contains(tag_set, parsed_expression["id"]))
+        return table.contains(tag_set, parsed_expression["id"])
+    elseif parsed_expression["notExp"] then
+        return not eval(parsed_expression["notExp"], tag_set)
+    elseif parsed_expression["andExp"] then
+        if deepcompare(parsed_expression["andExp"], {}) then
+            return true
+        elseif eval(parsed_expression["andExp"][1], tag_set) then
+            return eval({ andExp = tail(parsed_expression["andExp"]) }, tag_set)
+        else
+            return false
+        end
+    elseif parsed_expression["orExp"] then
+        if deepcompare(parsed_expression["orExp"], {}) then
+            return false
+        elseif eval(parsed_expression["orExp"][1], tag_set) then
+            return true
+        else
+            return eval({ orExp = tail(parsed_expression["orExp"]) }, tag_set)
+        end
+    end
+    error("Unexpected AST: " .. table.tostring(parsed_expression), 1)
+end
