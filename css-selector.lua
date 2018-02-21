@@ -11,8 +11,9 @@ NOTSTART = ':not%('
 NOTEND   = '%)'
 AND      = '%s+'
 OR       = '%s*,%s*'
+ANY      = '%*'
 
-tokens = { IDSTART , ID , NOTSTART , NOTEND , OR , AND }
+tokens = { IDSTART , ID , NOTSTART , NOTEND , OR , AND , ANY }
 
 function tokenize(selector_string)
     local tokenized_input = {}
@@ -60,6 +61,9 @@ function group_tokens(tokenized)
             current_token = current_token + 1
         elseif matches_token(tokenized[current_token], AND) then
             current_token = current_token + 1
+        elseif matches_token(tokenized[current_token], ANY) then
+            table.insert(grouped_tokens, ANY)
+            current_token = current_token + 1
         else
             error("Unexpected token: " .. tokenized[current_token], 1)
         end
@@ -80,6 +84,9 @@ function parse_groups(grouped_tokens)
             local parsed_not = { notExp = parse_groups(grouped_tokens[current_group]["notExp"]) }
             table.insert(current_expression["orExp"][1]["andExp"], parsed_not)
             current_group = current_group + 1
+        elseif grouped_tokens[current_group] == ANY then
+            table.insert(current_expression["orExp"][1]["andExp"], ANY)
+            current_group = current_group + 1
         elseif grouped_tokens[current_group] == OR then
             table.insert(current_expression["orExp"], 1, { andExp = {} })
             current_group = current_group + 1
@@ -92,7 +99,9 @@ end
 --- =========
 
 function eval(parsed_expression, tag_set)
-    if parsed_expression["id"] then
+    if parsed_expression == ANY then
+        return true
+    elseif parsed_expression["id"] then
         return table.contains(tag_set, parsed_expression["id"])
     elseif parsed_expression["notExp"] then
         return not eval(parsed_expression["notExp"], tag_set)

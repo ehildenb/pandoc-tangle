@@ -67,6 +67,31 @@ tests[5] = { input  = ".k , .rvk , :not(.uiuck)"
                       }
            }
 
+tests[6] = { input  = ".test .input *"
+           , tokens = { "." , "test" , " " , "." , "input" , " " , "*" }
+           , groups = { { id = "test" } , { id = "input" } , ANY }
+           , ast    = { orExp = { { andExp = { { id = "test" } , { id = "input" } , ANY } } } }
+           , eval   = { { tset = { }                            , result = false }
+                      , { tset = { "test" }                     , result = false }
+                      , { tset = { "test" , "input" }           , result = true  }
+                      , { tset = { "test" , "input" , "extra" } , result = true  }
+                      , { tset = { "extra" }                    , result = false }
+                      }
+           }
+
+tests[7] = { input  = ".test , .input , *"
+           , tokens = { "." , "test"  , " , " , "." , "input" , " , " , "*" }
+           , groups = { { id = "test" } , OR , { id = "input" } , OR , ANY }
+           , ast    = { orExp = { { andExp = { ANY } } , { andExp = { { id = "input" } } } , { andExp = { { id = "test" } } } } }
+           , eval   = { { tset = { }                            , result = true }
+                      , { tset = { "test" }                     , result = true }
+                      , { tset = { "test" , "input" }           , result = true }
+                      , { tset = { "test" , "input" , "extra" } , result = true }
+                      , { tset = { "extra" }                    , result = true }
+                      }
+           }
+
+
 --- Run Tests
 --- ---------
 
