@@ -112,21 +112,15 @@ function eval(parsed_expression, tag_set)
     elseif parsed_expression["notExp"] then
         return not eval(parsed_expression["notExp"], tag_set)
     elseif parsed_expression["andExp"] then
-        if deepcompare(parsed_expression["andExp"], {}) then
-            return true
-        elseif eval(parsed_expression["andExp"][1], tag_set) then
-            return eval({ andExp = tail(parsed_expression["andExp"]) }, tag_set)
-        else
-            return false
+        for _,subexp in pairs(parsed_expression["andExp"]) do
+            if not eval(subexp, tag_set) then return false end
         end
+        return true
     elseif parsed_expression["orExp"] then
-        if deepcompare(parsed_expression["orExp"], {}) then
-            return false
-        elseif eval(parsed_expression["orExp"][1], tag_set) then
-            return true
-        else
-            return eval({ orExp = tail(parsed_expression["orExp"]) }, tag_set)
+        for _,subexp in pairs(parsed_expression["orExp"]) do
+            if eval(subexp, tag_set) then return true end
         end
+        return false
     end
     error("Unexpected AST: " .. table.tostring(parsed_expression), 1)
 end
