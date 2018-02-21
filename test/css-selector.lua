@@ -91,6 +91,16 @@ tests[7] = { input  = ".test , .input , *"
                       }
            }
 
+tests[8] = { input  = ".sh"
+           , tokens = { "." , "sh" }
+           , groups = { { id = "sh" } }
+           , ast    = { orExp = { { andExp = { { id = "sh" } } } } }
+           , eval   = { { tset = { "sh" }         , result = true  }
+                      , { tset = { "sh" , "one" } , result = true  }
+                      , { tset = { "one" }        , result = false }
+                      , { tset = { }              , result = false }
+                      }
+           }
 
 --- Run Tests
 --- ---------
