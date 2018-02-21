@@ -102,6 +102,17 @@ tests[8] = { input  = ".sh"
                       }
            }
 
+tests[9] = { input  = ".sh.one"
+           , tokens = { "." , "sh" , "." , "one" }
+           , groups = { { id = "sh" } , { id = "one" } }
+           , ast    = { orExp = { { andExp = { { id = "sh" } , { id = "one" } } } } }
+           , eval   = { { tset = { "sh" }         , result = false }
+                      , { tset = { "sh" , "one" } , result = true  }
+                      , { tset = { "one" }        , result = false }
+                      , { tset = { }              , result = false }
+                      }
+           }
+
 --- Run Tests
 --- ---------
 
