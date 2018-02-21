@@ -1,4 +1,11 @@
-tokens = { '%.' , ':not%(' , '%)' , ',' , '%s+' , '[%a%d-]+' }
+IDSTART  = '%.'
+ID       = '[%a%d-]+'
+NOTSTART = ':not%('
+NOTEND   = '%)'
+AND      = '%s+'
+OR       = '%s*,%s*'
+
+tokens = { IDSTART , ID , NOTSTART , NOTEND , AND , OR }
 
 function tokenize(selector_string)
     local tokenized_input = {}
