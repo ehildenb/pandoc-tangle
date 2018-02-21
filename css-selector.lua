@@ -5,7 +5,7 @@ NOTEND   = '%)'
 AND      = '%s+'
 OR       = '%s*,%s*'
 
-tokens = { IDSTART , ID , NOTSTART , NOTEND , AND , OR }
+tokens = { IDSTART , ID , NOTSTART , NOTEND , OR , AND }
 
 function tokenize(selector_string)
     local tokenized_input = {}
