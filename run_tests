@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-test_dir=test
-files=(css-selector)
-
-for file in $files; do
-    diff <(lua $test_dir/$file.lua) $test_dir/$file.out \
-        || exit "$?"
-done
