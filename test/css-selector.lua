@@ -20,15 +20,11 @@ function deepcompare(t1,t2,ignore_mt)
     return true
 end
 
-function test_tokenizer(input, output)
-    return deepcompare(tokenize(input), output)
-end
-
-print(test_tokenizer("test input", {"test", " ", "input"}))
-print(test_tokenizer("test input", {"test", " "}))
-print(test_tokenizer(".k.transferFrom-then-branch:not(.transferFrom-else-branch)",
+print(deepcompare(tokenize("test input"), {"test", " ", "input"}))
+print(deepcompare(tokenize("test input"), {"test", " "}))
+print(deepcompare(tokenize(".k.transferFrom-then-branch:not(.transferFrom-else-branch)"),
             {".", "k", ".", "transferFrom-then-branch", ":not(", ".", "transferFrom-else-branch", ")"}))
-print(test_tokenizer(".k .blah :not(.foo.bar)",
+print(deepcompare(tokenize(".k .blah :not(.foo.bar)"),
             {".", "k", " ", ".", "blah", " ", ":not(", ".", "foo", ".", "bar", ")"}))
-print(test_tokenizer(".k .blah :not(.foo.bar)",
+print(deepcompare(tokenize(".k .blah :not(.foo.bar)"),
             {".", "k", " ", ".", "blah", ".", "foo", ".", "bar", ")"}))
