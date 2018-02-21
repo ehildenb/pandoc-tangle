@@ -38,9 +38,11 @@ tests[5] = { input  = ".k , .rvk , :not(.uiuck)"
 --- Run Tests
 --- ---------
 
-function test_error(expected, actual)
-    print("expected: " .. table.tostring(expected) .. "\nactual:   " .. table.tostring(actual))
-    error("test failure!", 1)
+function assert_equal(expected, actual)
+    if not deepcompare(expected, actual) then
+        print("expected: " .. table.tostring(expected) .. "\nactual:   " .. table.tostring(actual))
+        error("test failure!", 1)
+    end
 end
 
 for i,_ in pairs(tests) do
@@ -48,19 +50,13 @@ for i,_ in pairs(tests) do
 
     print("testing tokenizer...")
     local tokenized = tokenize(tests[i]["input"])
-    if not deepcompare(tokenized, tests[i]["tokens"]) then
-        test_error(tests[i]["tokens"], tokenized)
-    end
+    assert_equal(tests[i]["tokens"], tokenized)
 
     print("testing token grouper...")
     local grouped = group_tokens(tests[i]["tokens"])
-    if not deepcompare(grouped, tests[i]["groups"]) then
-        test_error(tests[i]["groups"], grouped)
-    end
+    assert_equal(tests[i]["groups"], grouped)
 
     print("testing group parser...")
     local parsed = parse_groups(tests[i]["groups"])
-    if not deepcompare(parsed, tests[i]["ast"]) then
-        test_error(tests[i]["ast"], parsed)
-    end
+    assert_equal(tests[i]["ast"], parsed)
 end
