@@ -56,6 +56,11 @@ for i,_ in pairs(tests) do
 
     print("testing tokenizer...")
     if not deepcompare(tokenize(tests[i]["input"]), tests[i]["tokens"]) then
-        error("Tokenizer test failure: " .. i, 1)
+        error("Tokenizer test failure!", 1)
+    end
+
+    print("testing token grouper...")
+    if not deepcompare(group_tokens(tests[i]["tokens"]), tests[i]["groups"]) then
+        error("Token grouper failure!", 1)
     end
 end
