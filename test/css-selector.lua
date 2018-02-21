@@ -1,4 +1,4 @@
-require "css-selector"
+require "../css-selector"
 
 function deepcompare(t1,t2,ignore_mt)
     local ty1 = type(t1)
