@@ -7,6 +7,10 @@ OR       = '%s*,%s*'
 
 tokens = { IDSTART , ID , NOTSTART , NOTEND , OR , AND }
 
+function matches_token(input, token)
+    return string.match(input, '^' .. token, 1)
+end
+
 function tokenize(selector_string)
     local tokenized_input = {}
     local found_token = false
@@ -17,7 +21,7 @@ function tokenize(selector_string)
         found_token = false
         for _,token in pairs(tokens) do
             --- print("matching token: " .. token)
-            match = string.match(selector_string, '^' .. token, 1)
+            match = matches_token(selector_string, token)
             if match then
                 --- print("token matched!")
                 found_token = true
