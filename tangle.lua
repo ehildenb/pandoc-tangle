@@ -10,20 +10,6 @@ local function split_classes(str)
     return classes
 end
 
-function print_tbl(t,d)
-    if d == nil then d = 0 end
-    if type(t) == "table" then
-        if d > 0 then print() end
-        for k,v in pairs(t) do
-           io.write(string.rep(' ',d)..tostring(k)..":"); print_tbl(v,d+1)
-        end
-    elseif type(t) == "string" then
-        io.write(string.format("%q\n",t))
-    else
-        print(type(t),'(',t,')')
-    end
-end
-
 local function keep_only_lines(str)
     local count = 0
     for _ in string.gmatch(str,'\n') do
