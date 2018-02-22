@@ -2,6 +2,9 @@ require "css-selector"
 
 local blocks={}
 
+--- Utilities
+--- =========
+
 local function split_classes(str)
     local classes = {}
     for class in string.gmatch(str, "[^ ]+") do
@@ -17,6 +20,9 @@ local function keep_only_lines(str)
     end
     return string.rep('\n',count)
 end
+
+--- Document Printers
+--- =================
 
 function Doc(body, metadata, variables)
     local targets = parse(metadata.code or '*')
@@ -37,80 +43,30 @@ function Doc(body, metadata, variables)
     return string.gsub(body,'#',replace)
 end
 
-function Header(lvl,text)
-    text = keep_only_lines(text)
-    if lvl == 1 then
-        return text..'\n\n'
-    elseif lvl == 2 then
-        return text..'\n\n'
-    elseif lvl == 3 then
-        return text..'\n'
-    else
-        return text..'\n'
-    end
-end
-
-function CodeBlock(s, attr)
-    table.insert(blocks,{split_classes(attr.class or ''),s})
-    return '\n#\n\n'
-end
-
-function Space()
-    return ''
-end
-function SoftBreak()
-    return '\n'
-end
-function LineBreak()
-    return '\n'
-end
-function Str(s)
-    return keep_only_lines(s)
-end
-function Table(s)
-    return keep_only_lines(s)
-end
-function DisplayMath(s)
-    return keep_only_lines(s)
-end
-
-local function InlineMarkup(s)
-    return keep_only_lines(s)
-end
-Emph = InlineMarkup
-Strong = InlineMarkup
-Subscript = InlineMarkup
-Superscript = InlineMarkup
-SmallCaps = InlineMarkup
-Strikeout = InlineMarkup
-Code = InlineMarkup
-InlineMath = InlineMarkup
-DiplayMath = InlineMarkup
+--- Blocks
+--- ------
 
 function Plain(s)
     return s..' '
-end
-
-function Image()
-    return ''
-end
-function Note()
-    return ''
-end
-
-Span = InlineMarkup
-DoubleQuoted = InlineMarkup
-
-function Link(text,target,title,attr)
-    return keep_only_lines(text)..keep_only_lines(target)
 end
 
 function Para(s)
     return s..'\n'
 end
 
-function Blocksep()
-    return '\n'
+--- LineBlock
+
+function CodeBlock(s, attr)
+    table.insert(blocks,{split_classes(attr.class or ''),s})
+    return '\n#\n\n'
+end
+
+--- RawBlock
+
+--- BlockQuote
+
+function OrderedList(items)
+    return BulletList(items)
 end
 
 function BulletList(items)
@@ -124,8 +80,94 @@ function BulletList(items)
     end
 end
 
-function OrderedList(items)
-    return BulletList(items)
+--- DefinitionList
+
+function Header(lvl,text)
+    text = keep_only_lines(text)
+    if lvl == 1 then
+        return text..'\n\n'
+    elseif lvl == 2 then
+        return text..'\n\n'
+    elseif lvl == 3 then
+        return text..'\n'
+    else
+        return text..'\n'
+    end
+end
+
+--- HorizontalRule
+
+function Table(s)
+    return keep_only_lines(s)
+end
+
+--- Div
+
+--- Null
+
+--- Inlines
+--- -------
+
+local function InlineMarkup(s)
+    return keep_only_lines(s)
+end
+
+function Str(s)
+    return keep_only_lines(s)
+end
+
+Emph        = InlineMarkup
+Strong      = InlineMarkup
+Strikeout   = InlineMarkup
+Superscript = InlineMarkup
+Subscript   = InlineMarkup
+SmallCaps   = InlineMarkup
+
+--- Quoted
+
+--- Cite
+
+Code = InlineMarkup
+
+function Space()
+    return ''
+end
+
+function SoftBreak()
+    return '\n'
+end
+
+function LineBreak()
+    return '\n'
+end
+
+--- Math
+
+--- RawInline
+
+function Link(text,target,title,attr)
+    return keep_only_lines(text)..keep_only_lines(target)
+end
+
+function Image()
+    return ''
+end
+
+function Note()
+    return ''
+end
+
+Span = InlineMarkup
+
+--- Backwards compatibility
+--- -----------------------
+
+function DisplayMath(s)
+    return keep_only_lines(s)
+end
+
+function Blocksep()
+    return '\n'
 end
 
 local function IgnoreBlock(key)
@@ -134,7 +176,13 @@ local function IgnoreBlock(key)
     end
 end
 
--- The following code ignores any other items
+InlineMath   = InlineMarkup
+DiplayMath   = InlineMarkup
+DoubleQuoted = InlineMarkup
+
+--- Ignore Non-Existant Document Elements
+--- =====================================
+
 local meta = {}
 meta.__index =
     function(_, key)
