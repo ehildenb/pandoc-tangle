@@ -10,5 +10,5 @@ pandoc_command="pandoc --from markdown --to tangle.lua"
 (   tmp_output="$(mktemp test/tmp.XXXXXX)"
     trap "rm -rf $tmp_output" INT TERM EXIT
     $pandoc_command "$orig_file" > "$tmp_output"
-    diff "$expected_output" "$tmp_output" || exit "$?"
+    diff -B "$expected_output" "$tmp_output" || exit "$?"
 )
