@@ -10,6 +10,8 @@ Dependencies
 -   [Pandoc] - universal converter between document formats.
 -   [Lua] - scripting language used for [Pandoc] filters.
 
+**NOTE**: You must `export LUA_PATH=/path/to/pandoc-tangle/?.lua;;` before running `pandoc` so that the Lua `require ...` statements work.
+
 Example Usage
 -------------
 
