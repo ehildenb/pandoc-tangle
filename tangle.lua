@@ -82,14 +82,10 @@ end
 
 --- DefinitionList
 
-function Header(lvl,text)
+function Header(h)
     text = keep_only_lines(text)
-    if lvl == 1 then
+    if h.level == 1 or h.level == 2 then
         return text..'\n\n'
-    elseif lvl == 2 then
-        return text..'\n\n'
-    elseif lvl == 3 then
-        return text..'\n'
     else
         return text..'\n'
     end
