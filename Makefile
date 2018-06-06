@@ -1,6 +1,6 @@
-.PHONY: css-test tangle-test test
+.PHONY: css-test tangle-test include-test test
 
-test: css-test tangle-test
+test: css-test tangle-test include-test
 
 css-test:
 	lua test/css-selector.lua
@@ -14,3 +14,6 @@ tangle-test:
 	./test/tangle test/doc1.md test/doc1-sh-one.out        '.one.sh'
 	./test/tangle test/doc1.md test/doc1-not-one.out       ':not(.one)'
 	./test/tangle test/doc1.md test/doc1-sh-or-not-one.out '.sh,:not(.one)'
+
+include-test:
+	./test/include test/doc-include.md test/doc-include.out

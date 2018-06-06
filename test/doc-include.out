@@ -1,0 +1,55 @@
+Here is the content of `doc1.md`
+
+Header 1
+========
+
+Some text goes here.
+
+``` {.sh}
+Tags: sh
+```
+
+More text here.
+
+``` {.sh .one}
+Tags: sh one
+```
+
+More text here.
+
+``` {.one}
+Tags: one
+```
+
+More text here.
+
+    Tags:
+
+------------------------------------------------------------------------
+
+and again:
+
+Header 1 {#header-1}
+========
+
+Some text goes here.
+
+``` {.sh}
+Tags: sh
+```
+
+More text here.
+
+``` {.sh .one}
+Tags: sh one
+```
+
+More text here.
+
+``` {.one}
+Tags: one
+```
+
+More text here.
+
+    Tags:

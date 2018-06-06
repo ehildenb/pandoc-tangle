@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+orig_file="$1"       ; shift
+expected_output="$1" ; shift
+
+pandoc_command="pandoc --from markdown --lua-filter=include.lua --to markdown"
+
+(   tmp_output="$(mktemp test/tmp.XXXXXX)"
+    trap "rm -rf $tmp_output" INT TERM EXIT
+    $pandoc_command "$orig_file" > "$tmp_output"
+    diff -B "$expected_output" "$tmp_output" || exit "$?"
+)
