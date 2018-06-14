@@ -8,7 +8,7 @@ local blocks={}
 local function split_classes(str)
     local classes = {}
     for class in string.gmatch(str, "[^ ]+") do
-        classes[class] = true
+        table.insert(classes, class)
     end
     return classes
 end
@@ -28,11 +28,8 @@ function Doc(body, metadata, variables)
     local targets = parse(metadata.code or '*')
     local block = 1
     local function replace()
-        local classes = {}
-        for k,_ in pairs(blocks[block][1]) do
-            table.insert(classes,k)
-        end
-        local code = blocks[block][2]
+        local classes = blocks[block][1]
+        local code    = blocks[block][2]
         block = block + 1
         if eval(targets, classes) then
             return code
@@ -57,7 +54,7 @@ end
 --- LineBlock
 
 function CodeBlock(s, attr)
-    table.insert(blocks,{split_classes(attr.class or ''),s})
+    table.insert(blocks,{split_classes(attr.class),s})
     return '\n#\n\n'
 end
 
