@@ -4,7 +4,7 @@ orig_file="$1"       ; shift
 expected_output="$1" ; shift
 tangle_code="$1"     ; shift
 
-pandoc_command="pandoc --from markdown --to tangle.lua"
+pandoc_command="pandoc --from markdown --to markdown --lua-filter tangle.lua"
 [[ ! -z "$tangle_code" ]] && pandoc_command="$pandoc_command --metadata=code:$tangle_code"
 
 (   tmp_output="$(mktemp $orig_file.XXXXXX)"
