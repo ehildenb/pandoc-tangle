@@ -84,12 +84,8 @@ end
 
 function Header(lvl,text)
     text = keep_only_lines(text)
-    if lvl == 1 then
+    if lvl == 1 or lvl == 2 then
         return text..'\n\n'
-    elseif lvl == 2 then
-        return text..'\n\n'
-    elseif lvl == 3 then
-        return text..'\n'
     else
         return text..'\n'
     end
