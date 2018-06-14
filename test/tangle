@@ -7,7 +7,7 @@ tangle_code="$1"     ; shift
 pandoc_command="pandoc --from markdown --to tangle.lua"
 [[ ! -z "$tangle_code" ]] && pandoc_command="$pandoc_command --metadata=code:$tangle_code"
 
-(   tmp_output="$(mktemp test/tmp.XXXXXX)"
+(   tmp_output="$(mktemp $orig_file.XXXXXX)"
     trap "rm -rf $tmp_output" INT TERM EXIT
     $pandoc_command "$orig_file" > "$tmp_output"
     diff -B "$expected_output" "$tmp_output" || exit "$?"
