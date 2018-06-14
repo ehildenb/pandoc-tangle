@@ -107,6 +107,8 @@ end
 function eval(parsed_expression, tag_set)
     if parsed_expression == ANY then
         return true
+    elseif #tag_set == 0 then
+        return false
     elseif parsed_expression["id"] then
         return table.contains(tag_set, parsed_expression["id"])
     elseif parsed_expression["notExp"] then

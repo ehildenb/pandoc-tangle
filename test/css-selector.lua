@@ -58,7 +58,7 @@ tests[5] = { input  = ".k , .rvk , :not(.uiuck)"
            , tokens = { "." , "k" , " , " , "." , "rvk" , " , " , ":not(" , "." , "uiuck" , ")" }
            , groups = { { id = "k" } , OR , { id = "rvk" } , OR , { notExp = { { id = "uiuck" } } } }
            , ast    = { orExp = { { andExp = { { notExp = { orExp = { { andExp = { { id = "uiuck" } } } } } } } } , { andExp = { { id = "rvk" } } } , { andExp = { { id = "k" } } } } }
-           , eval   = { { tset = { }                 , result = true  }
+           , eval   = { { tset = { }                 , result = false }
                       , { tset = { "k" }             , result = true  }
                       , { tset = { "rvk" }           , result = true  }
                       , { tset = { "extra" }         , result = true  }
@@ -83,11 +83,11 @@ tests[7] = { input  = ".test , .input , *"
            , tokens = { "." , "test"  , " , " , "." , "input" , " , " , "*" }
            , groups = { { id = "test" } , OR , { id = "input" } , OR , ANY }
            , ast    = { orExp = { { andExp = { ANY } } , { andExp = { { id = "input" } } } , { andExp = { { id = "test" } } } } }
-           , eval   = { { tset = { }                            , result = true }
-                      , { tset = { "test" }                     , result = true }
-                      , { tset = { "test" , "input" }           , result = true }
-                      , { tset = { "test" , "input" , "extra" } , result = true }
-                      , { tset = { "extra" }                    , result = true }
+           , eval   = { { tset = { }                            , result = false }
+                      , { tset = { "test" }                     , result = true  }
+                      , { tset = { "test" , "input" }           , result = true  }
+                      , { tset = { "test" , "input" , "extra" } , result = true  }
+                      , { tset = { "extra" }                    , result = true  }
                       }
            }
 
