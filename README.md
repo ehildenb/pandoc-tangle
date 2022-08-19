@@ -78,6 +78,7 @@ Note that AND (justaposition) binds tighter than OR (comma).
 Resources
 ---------
 
-[Pandoc]: <https://pandoc.org>
-[Lua]: <https://www.lua.org>
-[CSS selectors]: <https://www.w3schools.com/cssref/css_selectors.asp>
+- [Pandoc](https://pandoc.org)
+- [Lua](https://www.lua.org)
+- [CSS selectors](https://www.w3schools.com/cssref/css_selectors.asp)
+- [Universal selector in CSS](https://www.scaler.com/topics/universal-selector-in-css/)
