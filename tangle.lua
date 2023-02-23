@@ -153,6 +153,10 @@ function Image()
     return ''
 end
 
+function CaptionedImage()
+    return ''
+end
+
 function Note()
     return ''
 end
